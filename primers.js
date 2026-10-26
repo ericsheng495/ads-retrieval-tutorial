@@ -5,7 +5,10 @@ function beginnerPath() {
 function modelDiagram(name) {
   let body='',caption='Schematic of the computation, not a reproduction of a paper figure.';
   const split=(input,upper,lower,upperSub='',lowerSub='')=>`${box(5,95,145,60,input,'node')}${arrow(151,125,190,125)}<path class="flow" d="M190 125 V54 H235" marker-end="url(#arrow)"/><path class="flow" d="M190 125 V194 H235" marker-end="url(#arrow)"/>${box(240,27,185,55,upper,'tower',upperSub)}${box(240,167,185,55,lower,'tower',lowerSub)}<path class="flow" d="M425 54 H475 V114 H515" marker-end="url(#arrow)"/><path class="flow" d="M425 194 H475 V135 H515" marker-end="url(#arrow)"/>${box(520,96,135,58,'Prediction','node','combine + sigmoid')}`;
-  if(name==='two-stage') {
+  if(name==='training-platform') {
+    body=`${box(5,30,135,58,'Event logs','node','batch or stream')}${arrow(141,59,174,59)}${box(180,30,135,58,'Versioned data','node','labels + features')}${arrow(316,59,349,59)}${box(355,30,130,58,'Training job','tower','mini-batches')}${arrow(486,59,519,59)}${box(525,30,130,58,'Checkpoint','node','weights + state')}<path class="flow" d="M590 89 V135 H70 V184" marker-end="url(#arrow)"/>${box(5,190,135,58,'Validate','tower','quality + serving')}${arrow(141,219,174,219)}${box(180,190,135,58,'Export','node','compatible encoders')}${arrow(316,219,349,219)}${box(355,190,130,58,'Index + bundle','node','immutable versions')}${arrow(486,219,519,219)}${box(525,190,130,58,'Roll out','tower','monitor + recover')}`;
+    caption='Scheduling cadence and mini-batch size are separate choices. Validation and compatible artifacts sit between a successful training job and serving.';
+  } else if(name==='two-stage') {
     body=`${box(5,25,135,55,'Item features','node')}${arrow(141,53,174,53)}${box(180,25,135,55,'Item encoder','tower','run ahead of time')}${arrow(316,53,349,53)}${box(355,25,130,55,'Item vectors','node','ID + version')}${arrow(486,53,519,53)}${box(525,25,130,55,'ANN index','tower','catalog structure')}${box(5,155,135,55,'Live request','node','user + context')}${arrow(141,183,174,183)}${box(180,155,135,55,'User encoder','tower','one query vector')}${arrow(316,183,349,183)}${box(355,155,130,55,'ANN query','node','retrieve top K')}${arrow(486,183,519,183)}${box(525,155,130,55,'Candidates','node','e.g. 500 IDs')}<path class="flow" d="M590 81 V115 H420 V150" marker-end="url(#arrow)"/><path class="flow" d="M590 211 V236 H420 V261" marker-end="url(#arrow)"/>${box(355,267,130,55,'Joint ranker','tower','richer pair features')}${arrow(486,295,519,295)}${box(525,267,130,55,'Selection','node','rules / display')}<text class="dim" x="20" y="125">OFFLINE / PRECOMPUTED ↑</text><text class="dim" x="20" y="252">ONLINE REQUEST ↓</text>`;
     caption='Precompute compatible item vectors and the index. At request time, encode the query, retrieve IDs, build pair features, and rank that shortlist.';
   } else if(name==='request-loop') {
@@ -38,7 +41,21 @@ function decoratePrimers(article) {
   $$('[data-explorer]',article).forEach(slot=>{
     if(slot.dataset.explorer==='predictor')mountPredictor(slot);
     if(slot.dataset.explorer==='rank-order')mountRanking(slot);
+    if(slot.dataset.explorer==='batch-training')mountBatchTraining(slot);
   });
+}
+
+function mountBatchTraining(root) {
+  root.className='lab beginner-explorer';root.id='batch-training-explorer';
+  root.innerHTML=`<div class="lab-header"><span class="lab-label">BATCH SIZE HAS MORE THAN ONE MEANING</span><span class="lab-badge">Illustrative arithmetic</span></div><h3>One update is not one negative pool</h3><p class="lab-instruction">Change the number of workers, local forward batch, and accumulation steps. Candidate columns only grow across workers when gathering is enabled.</p>${slider('train-workers','Synchronized workers',1,8,4,1)}${slider('train-local-batch','Examples per worker per forward pass',32,512,128,32)}${slider('train-accumulation','Micro-steps accumulated before an update',1,8,4,1)}${toggle('train-gather','Gather item candidates across workers in this forward pass')}<div id="batch-training-formula" class="formula"></div><div id="batch-training-stats" class="lab-stats" aria-live="polite"></div><p class="lab-note">Assumes distinct examples and correct gradient/loss scaling. Candidate columns are before duplicate and positive masking. Accumulation alone does not share candidates across micro-steps; no training throughput or latency is predicted here.</p>`;
+  function update(){
+    const workers=Number($('#train-workers').value),batch=Number($('#train-local-batch').value),accumulation=Number($('#train-accumulation').value),gather=$('#train-gather').checked;
+    for(const id of ['train-workers','train-local-batch','train-accumulation'])$(`#${id}-output`).textContent=$(`#${id}`).value;
+    const effective=workers*batch*accumulation,candidates=gather?workers*batch:batch,cells=batch*candidates;
+    $('#batch-training-formula').textContent=`Update examples: ${batch} × ${workers} × ${accumulation} = ${effective.toLocaleString()} | This worker's score matrix: ${batch} × ${candidates}`;
+    $('#batch-training-stats').innerHTML=`<div class="lab-stat"><strong id="effective-update-batch">${effective.toLocaleString()}</strong><span>examples / optimizer update</span></div><div class="lab-stat"><strong id="forward-candidates">${candidates.toLocaleString()}</strong><span>candidate columns / forward</span></div><div class="lab-stat"><strong id="forward-score-cells">${cells.toLocaleString()}</strong><span>score cells / worker / forward</span></div>`;
+  }
+  $$('input',root).forEach(input=>input.addEventListener('input',update));update();
 }
 
 function mountPredictor(root) {

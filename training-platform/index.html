@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../">
+<meta name="initial-route" content="/training-platform">
+<meta name="content-url" content="assets/adf0426eadeb/content.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5ef">
+  <meta name="description" content="Learn recommendation and ranking from zero, then build ML retrieval. Beginner primers, interactive diagrams, all ten Snap ad-ranking references, and PyTorch exercises.">
+  <title>Batch, offline, and online training: the ML platform view — Retrieval Lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23285c48'/%3E%3Ctext x='11' y='30' fill='white' font-family='Georgia' font-size='32' font-style='italic'%3Er%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/adf0426eadeb/styles.css">
+  <script src="assets/adf0426eadeb/primers.js" defer></script>
+  <script src="assets/adf0426eadeb/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to lesson</a>
+  <div class="reading-progress" aria-hidden="true"><span id="reading-fill"></span></div>
+  <header class="mobile-header"><a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span> Retrieval Lab</a><button id="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button></header>
+  <aside id="sidebar" class="sidebar" aria-label="Course navigation">
+    <a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span><span>Retrieval Lab<small>A FIELD GUIDE TO CANDIDATE GENERATION</small></span></a>
+    <label class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find a concept…" aria-label="Search lessons and papers"><kbd>/</kbd></label>
+    <div id="search-results" aria-live="polite" hidden></div>
+    <nav>
+      <a class="nav-overview" href="#/">Overview <span>↗</span></a>
+      <p class="nav-label">START HERE · NO BACKGROUND NEEDED</p>
+      <a class="resource-link" href="#/foundations"><span>01</span> Recommenders from zero</a>
+      <a class="resource-link" href="#/ranking"><span>02</span> How ranking works</a>
+      <a class="resource-link" href="#/two-stage"><span>↳</span> How the stages fit together</a>
+      <a class="resource-link" href="#/models"><span>03</span> Snap’s ten references</a>
+      <a class="resource-link" href="#/glossary"><span>?</span> Plain-language glossary</a>
+      <p class="nav-label">THE LEARNING PATH</p>
+      <div id="lesson-nav"></div>
+      <p class="nav-label">YOUR WORKBENCH</p>
+      <a class="resource-link" href="#/training-platform"><span>⇄</span> Training & ML platforms</a>
+      <a class="resource-link" href="#/start"><span>↳</span> Your first implementation</a>
+      <a class="resource-link" href="#/roadmap"><span>□</span> Eight-week roadmap</a>
+      <a class="resource-link" href="#/papers"><span>▤</span> Paper library</a>
+      <a class="resource-link" href="#/evaluation"><span>≋</span> Evaluation contract</a>
+    </nav>
+    <div class="course-progress"><div><span>Your progress</span><strong id="progress-label">0 / 9</strong></div><progress id="course-progress" value="0" max="9">0 of 9 lessons</progress><small>Saved on this browser.</small></div>
+    <a class="repo-link" href="https://github.com/ericsheng495/ads-retrieval-from-scratch" target="_blank" rel="noopener">Project repository <span>↗</span></a>
+  </aside>
+  <main id="main" tabindex="-1"><header class="reader-head"><h1>Batch, offline, and online training: the ML platform view</h1></header><article class="article"><p>The model architecture is only one part of a production recommender. A platform
+must turn events into reproducible examples, train efficiently, validate the
+result, and deploy compatible artifacts while the product keeps serving.
+Start with <a href="two-stage/">the two-stage system</a> if those artifacts are still unclear.</p>
+<h2 id="1-batch-and-offline-are-not-opposites">1. Batch and offline are not opposites</h2>
+<p>“Batch” describes several different things. Ask which meaning someone intends.</p>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>What it describes</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mini-batch training</td>
+<td>Examples processed together for a forward/backward computation</td>
+<td>256 user/item examples at a time</td>
+</tr>
+<tr>
+<td>Full-batch gradient descent</td>
+<td>An update computed using the whole training dataset</td>
+<td>One update from all N examples</td>
+</tr>
+<tr>
+<td>Batch/offline training job</td>
+<td>A bounded run over stored data, outside the serving request</td>
+<td>A nightly job training on a fixed snapshot</td>
+</tr>
+<tr>
+<td>Micro-batch stream processing</td>
+<td>A small time slice or chunk of arriving events</td>
+<td>Materialize new examples every few minutes</td>
+</tr>
+<tr>
+<td>Online/incremental learning</td>
+<td>Updating a model state from newly arriving data</td>
+<td>Continue learning from recent mature labels</td>
+</tr>
+<tr>
+<td>Batch inference</td>
+<td>Predicting for many inputs without learning</td>
+<td>Export item embeddings for an ANN index</td>
+</tr>
+<tr>
+<td>Online inference</td>
+<td>Predicting during a live request</td>
+<td>Encode the user and rank current candidates</td>
+</tr>
+</tbody>
+</table>
+<p>A nightly offline job normally trains with mini-batches. A near-real-time
+learner can buffer examples into mini-batches too. A model serving online does
+not necessarily learn online. Computing a million item embeddings changes
+outputs and index contents, not model weights.</p>
+<p>“Offline” also appears in <strong>offline evaluation</strong>, which means testing on a
+stored dataset rather than measuring actual deployed outcomes. That is another
+axis, not a synonym for training.</p>
+<h2 id="2-three-independent-choices">2. Three independent choices</h2>
+<p>Separate <strong>when the job runs</strong>, <strong>what data it reads</strong>, and <strong>where its weights
+start</strong>. A job can run hourly but still retrain from scratch. Another daily job
+can warm-start from yesterday's weights and process only new data. A streaming
+learner can use a replay buffer of older examples alongside fresh ones.</p>
+<table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>Simpler operational benefit</th>
+<th>Main complication</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Full retraining on a versioned window</td>
+<td>Clear reset and repeatable experiment</td>
+<td>Data/compute cost and deployment lag</td>
+</tr>
+<tr>
+<td>Warm-start on recent + historical data</td>
+<td>Reuses useful learned state</td>
+<td>Dependence on the predecessor checkpoint and replay policy</td>
+</tr>
+<tr>
+<td>Incremental updates on arriving examples</td>
+<td>Potentially faster adaptation</td>
+<td>Ordering, duplicates, late labels, forgetting, recovery</td>
+</tr>
+</tbody>
+</table>
+<p>A possible teaching design combines periodic full retraining, more frequent
+incremental jobs, and fresh request-time features. These mechanisms address
+different kinds of freshness; it is not a claim about a particular Snap team.</p>
+<h2 id="3-the-actual-platform-pipeline">3. The actual platform pipeline</h2>
+<div class="architecture-slot" data-diagram="training-platform"></div>
+
+<p>Think of each box as an artifact contract, not necessarily one service. An
+orchestrator schedules dependencies, retries failures, tracks resources, and
+records which outputs belong to which run. The training script should not
+silently read a moving “latest” dataset while claiming reproducible results.</p>
+<p>For one run, record the data snapshot/window, label definition and maturity
+cutoff, feature schema/transforms, sampling policy, code/environment, predecessor
+checkpoint if any, and training configuration. The output is a validated model
+plus dependencies, not just <code>model.pt</code>.</p>
+<h2 id="4-labels-have-a-clock-features-have-another-clock">4. Labels have a clock; features have another clock</h2>
+<p>Suppose an impression occurs at time T and a conversion can count for 48 hours.
+At T+1 hour, “no conversion yet” is not a mature negative. A simple training
+policy waits for the observation window, with an explicit allowance for reporting
+delay. Other approaches model censoring/delay, but need their own assumptions.</p>
+<p><strong>Feature event time</strong> says when a value describes the world. <strong>Availability or
+ingestion time</strong> says when the platform could actually use it. A backfilled
+feature can have an old event timestamp while becoming available much later.
+Training should not use a later correction as though the serving model knew it.</p>
+<p>Example: a purchase happened at 10:00, but the feature service received it at
+10:20. A 10:05 prediction could not have used that purchase count, even though
+the event itself was earlier. Reconstruct both timing constraints when they
+matter. Feast's <a href="https://docs.feast.dev/getting-started/concepts/point-in-time-joins">point-in-time join documentation</a>
+explains the distinction and its created-timestamp filtering option; support
+depends on the offline store.</p>
+<h2 id="5-feature-consistency-across-training-and-serving">5. Feature consistency across training and serving</h2>
+<p>An offline table and a low-latency feature store can represent the same conceptual
+feature with different freshness and transformation paths. <strong>Training-serving
+skew</strong> occurs when the model learns from inputs different from those it receives.</p>
+<p>Write an exact contract: entity key, event-time meaning, availability rule,
+aggregation window, missing-value default, vocabulary version, and numeric scale.
+“Seven-day interaction count” is ambiguous without cutoff, deduplication, and
+late-event rules. Reuse transformations where practical and test historical
+reconstruction against captured serving inputs.</p>
+<p>Fresh features do not require freshly trained weights on every request. A
+fixed user encoder can immediately respond to a new history feature if its
+input and serving path support that update. The index's item content may still
+be older; measure those freshness dimensions separately.</p>
+<h2 id="6-mini-batches-accumulation-and-the-effective-update-batch">6. Mini-batches, accumulation, and the effective update batch</h2>
+<p>In ordinary synchronized data-parallel training, suppose each of W workers
+processes B examples per micro-step and accumulates A micro-steps before updating:</p>
+<pre><code class="language-text">examples contributing to an optimizer update = B × W × A
+</code></pre>
+<p>For B=128, W=4, and A=4, that is 2,048 examples per update, assuming the inputs
+are distinct and loss scaling is correct. Accumulation trades additional work
+between optimizer steps for lower per-micro-step activation memory. It does
+not make all examples simultaneously available to every operation.</p>
+<div data-explorer="batch-training"></div>
+
+<p>For in-batch retrieval loss, a worker may still see only B candidate columns in
+that forward pass. Gathering candidates across W workers can expose B×W columns.
+Accumulating A steps does <strong>not</strong> automatically create a B×W×A candidate pool.
+A queue or a different computation would be required, with gradient and
+staleness choices to define. Thus matching an “effective batch size” does not
+establish equivalence of two contrastive-training setups.</p>
+<p>Even for other losses, normalization layers, randomness, variable-size batches,
+and learning-rate schedules can change equivalence. PyTorch's
+<a href="https://docs.pytorch.org/docs/2.14/notes/amp_examples.html#gradient-accumulation">accumulation examples</a>
+document effective-step scaling and mixed-precision handling.</p>
+<h2 id="7-distributed-training-is-a-correctness-problem-too">7. Distributed training is a correctness problem too</h2>
+<p><strong>Data parallelism</strong> replicates a model across workers and combines gradients.
+PyTorch DDP synchronizes gradients; the application still needs appropriately
+partitioned examples. Giving every worker identical data wastes diversity and
+can change a retrieval sampler's assumptions. See the
+<a href="https://docs.pytorch.org/docs/2.14/notes/ddp.html">DDP design notes</a>.</p>
+<p>For an illustrative two-worker task, worker A has 100 valid labels and worker B
+has 10. Blindly averaging their locally averaged losses gives the workers equal
+influence, not the 110 examples equal influence. Decide on the global normalization
+and valid-label masks, particularly with sparse multi-task conversion labels.</p>
+<p>For retrieval, also specify local versus cross-worker negatives, duplicate-item
+masking, whether gathered representations preserve the intended gradient paths,
+and the exact sampling distribution. All-gathered candidates can grow the score
+matrix and communication substantially.</p>
+<p><strong>Model parallelism/sharding</strong> distributes parameters, such as large embedding
+tables, across devices. It solves a different problem from replicating a small
+model for throughput. Sparse lookups, optimizer-state memory, and inter-device
+traffic can dominate a recommender even when its dense network is modest.</p>
+<p>Synchronous updates coordinate workers before applying a step; asynchronous
+updates can reduce waiting but introduce stale-update and ordering considerations.
+Neither is universally better. Record the actual setup when comparing results.</p>
+<h2 id="8-where-throughput-gets-lost">8. Where throughput gets lost</h2>
+<p>Profile the whole path: read/decompress records → join or fetch features → build
+batches → transfer data → embedding lookup → dense computation → communicate
+gradients/representations → optimizer update → checkpoint. Adding GPUs does not
+repair an input pipeline that cannot feed one GPU.</p>
+<p>Track examples/second, time spent waiting for data, communication time, memory,
+checkpoint overhead, job completion time, and cost to reach a chosen validation
+quality. A high hardware-utilization number by itself is not a useful business
+or model-quality result.</p>
+<p>Learning-rate schedules can be tied to optimizer steps, examples, or epochs.
+Changing batch size changes the relationship among those units. The same number
+of epochs with a new batch size is not automatically the same optimization budget.</p>
+<h2 id="9-freshness-is-an-end-to-end-budget">9. Freshness is an end-to-end budget</h2>
+<p>For a simplified sequential pipeline, event-to-serving delay includes label
+wait, scheduling wait, example preparation, training, export/index construction,
+and deployment. Some real steps overlap; write down what your measurement includes.</p>
+<p>An invented example: 48-hour label window + 12-hour average scheduling wait +
+1-hour preparation + 2-hour training + 0.5-hour indexing + 0.5-hour deployment
+is about 64 hours. The 12-hour average assumes uniform arrivals with a daily
+schedule. Reducing training by ten minutes cannot remove a two-day label window.</p>
+<p>Measure feature freshness, latest included mature event time, model age, item
+index age, and deployment lag separately. “We retrain hourly” does not imply
+hour-old learning signals. A fast update with broken labels is not an improvement.</p>
+<h2 id="10-recovery-retries-and-reproducibility">10. Recovery, retries, and reproducibility</h2>
+<p>A resumable training checkpoint can require optimizer/scheduler state, current
+step, mixed-precision scaler state where used, sampler/cursor or stream offsets,
+random state, and data/code versions in addition to model weights. PyTorch's
+<a href="https://docs.pytorch.org/tutorials/recipes/recipes/saving_and_loading_a_general_checkpoint.html">checkpoint guide</a>
+explains saving training state beyond weights. Exact replay across distributed
+systems and changing hardware can require further controls.</p>
+<p>The tutorial's <code>src/train.py</code> saves selected model weights and export metadata;
+it does not yet implement an exact-resume distributed training checkpoint.
+That distinction is intentional and should remain visible in an experiment note.</p>
+<p>Retries must not overwrite another run's artifacts or silently advance a stream
+cursor without its associated learning state. Use immutable output versions,
+explicit input IDs/offsets, and validated publication steps. Define whether
+reprocessing duplicates is possible rather than claiming “exactly once” from
+the existence of a retry button.</p>
+<h2 id="11-a-trained-model-is-not-yet-a-serving-release">11. A trained model is not yet a serving release</h2>
+<p>For two-tower retrieval, an export may change both query and item encoders.
+Build compatible item vectors and indexes, validate them, then promote a serving
+bundle with a clear compatibility rule. A feature-only eligibility change may
+have a different update path. Ranking weights, retrieval weights, vocabulary,
+feature transforms, and index parameters each need versions and owners.</p>
+<p>Check offline quality/slices, score calibration where relevant, artifact integrity,
+serving correctness, latency, memory, and fallbacks before exposure. A registry
+tracks candidate versions; a rollout policy controls who receives them. Updating
+a registry entry is not itself a successful deployment.</p>
+<p>A pipeline framework such as <a href="https://www.tensorflow.org/tfx/guide">TFX</a> illustrates
+the separation among ingestion, validation, transforms, training, evaluation,
+and serving checks. These responsibilities exist even if you choose other tools.</p>
+<h2 id="12-monitoring-after-rollout">12. Monitoring after rollout</h2>
+<p>Use fast operational signals such as error rate, latency, missing features,
+unknown IDs, score distributions, index freshness, and eligible fill rate.
+Use mature outcome data for delayed quality and calibration checks. A missing
+conversion feed should not masquerade as a sudden model-quality collapse.</p>
+<p>Trace a request to the deployed model/index/features and an artifact back to
+its training run. Rollback must restore a compatible bundle, not arbitrarily
+pair yesterday's query tower with today's index. A canary or shadow run helps
+observe behavior but does not replace an appropriate causal experiment.</p>
+<h2 id="13-a-small-platform-exercise-without-a-cluster">13. A small platform exercise, without a cluster</h2>
+<ol>
+<li>Write a training-run manifest naming the dataset cutoff, label window,
+   feature schema, sampler, starting checkpoint, and output versions.</li>
+<li>Simulate daily full retraining versus hourly incremental updates with
+   explicit example windows. Identify which data is replayed and why.</li>
+<li>Add optimizer/step state to a scratch training checkpoint; interrupt and
+   resume on fixed data, documenting any differences.</li>
+<li>Compare local batch size and accumulation in the interactive example.
+   Explain why the retrieval candidate pool did not multiply with accumulation.</li>
+<li>Build a compatible model/index export, then deliberately mix versions and
+   verify rejection. Sketch rollback and a delayed-label monitoring fault.</li>
+</ol>
+<p>The goal is to reason about contracts, cost, freshness, and failure modes before
+introducing orchestration or distributed infrastructure. Return to
+<a href="lesson/8/">production and transfer</a> or the
+<a href="snap-overview/">Snap post companion</a> to connect these ideas to
+the rest of the course.</p></article></main>
+  <noscript>This learning site needs JavaScript for the interactive diagrams. Read the full lessons at github.com/ericsheng495/ads-retrieval-from-scratch/tree/main/tutorials.</noscript>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
