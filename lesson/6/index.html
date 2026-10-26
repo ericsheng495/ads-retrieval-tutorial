@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../../">
+<meta name="initial-route" content="/lesson/6">
+<meta name="content-url" content="assets/a136279ed9f0/content.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5ef">
+  <meta name="description" content="Learn recommendation and ranking from zero, then build ML retrieval. Beginner primers, interactive diagrams, all ten Snap ad-ranking references, and PyTorch exercises.">
+  <title>Features &amp; user history — Retrieval Lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23285c48'/%3E%3Ctext x='11' y='30' fill='white' font-family='Georgia' font-size='32' font-style='italic'%3Er%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/a136279ed9f0/styles.css">
+  <script src="assets/a136279ed9f0/primers.js" defer></script>
+  <script src="assets/a136279ed9f0/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to lesson</a>
+  <div class="reading-progress" aria-hidden="true"><span id="reading-fill"></span></div>
+  <header class="mobile-header"><a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span> Retrieval Lab</a><button id="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button></header>
+  <aside id="sidebar" class="sidebar" aria-label="Course navigation">
+    <a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span><span>Retrieval Lab<small>A FIELD GUIDE TO CANDIDATE GENERATION</small></span></a>
+    <label class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find a concept…" aria-label="Search lessons and papers"><kbd>/</kbd></label>
+    <div id="search-results" aria-live="polite" hidden></div>
+    <nav>
+      <a class="nav-overview" href="#/">Overview <span>↗</span></a>
+      <p class="nav-label">START HERE · NO BACKGROUND NEEDED</p>
+      <a class="resource-link" href="#/foundations"><span>01</span> Recommenders from zero</a>
+      <a class="resource-link" href="#/ranking"><span>02</span> How ranking works</a>
+      <a class="resource-link" href="#/two-stage"><span>↳</span> How the stages fit together</a>
+      <a class="resource-link" href="#/models"><span>03</span> Snap’s ten references</a>
+      <a class="resource-link" href="#/glossary"><span>?</span> Plain-language glossary</a>
+      <p class="nav-label">THE LEARNING PATH</p>
+      <div id="lesson-nav"></div>
+      <p class="nav-label">YOUR WORKBENCH</p>
+      <a class="resource-link" href="#/start"><span>↳</span> Your first implementation</a>
+      <a class="resource-link" href="#/roadmap"><span>□</span> Eight-week roadmap</a>
+      <a class="resource-link" href="#/papers"><span>▤</span> Paper library</a>
+      <a class="resource-link" href="#/evaluation"><span>≋</span> Evaluation contract</a>
+    </nav>
+    <div class="course-progress"><div><span>Your progress</span><strong id="progress-label">0 / 9</strong></div><progress id="course-progress" value="0" max="9">0 of 9 lessons</progress><small>Saved on this browser.</small></div>
+    <a class="repo-link" href="https://github.com/ericsheng495/ads-retrieval-from-scratch" target="_blank" rel="noopener">Project repository <span>↗</span></a>
+  </aside>
+  <main id="main" tabindex="-1"><header class="reader-head"><h1>Features &amp; user history</h1></header><article class="article"><h2 id="concept">Concept</h2>
+<p>ID embeddings memorize behavior for known entities. Feature encoders can share
+information across entities: two movies may share genres even when one has few
+ratings. A history encoder maps a user's observed actions to a vector and can
+represent a user or session whose ID never appeared during training.</p>
+<p>Pooling treats history as a set or bag. A sequence encoder can use order and
+recency. More complexity only helps if it adds useful information under a fair
+comparison.</p>
+<h3 id="what-can-generalize-depends-on-the-inputs">What can generalize depends on the inputs</h3>
+<p>An ID-only encoder knows what training assigned to one identifier. Content
+features let it reuse relationships across similar items. A multi-hot genre
+vector has one position per genre and can mark several as active. An unknown
+identifier still needs a defined representation; a new random row is not knowledge.</p>
+<p>Mean pooling averages history vectors. Attention pooling learns contributions
+from history elements. A sequence model can also represent position and temporal
+relationships. Start with the mean to find out what extra complexity contributes.</p>
+<p>Every prediction needs a history cutoff. A padding mask excludes filler tokens;
+a causal mask restricts attention to earlier positions. Neither repairs a loader
+that already supplied future events. Input availability is a data-design concern.</p>
+<h2 id="worked-example">Worked example</h2>
+<p>History item vectors are <code>[1,0]</code> and <code>[0,1]</code>. Mean pooling gives <code>[0.5,0.5]</code>, which
+represents both interests equally. Weights 0.2 and 0.8 produce <code>[0.2,0.8]</code>, emphasizing
+the second interest. Neither pooling rule distinguishes <code>[A,B]</code> from <code>[B,A]</code> unless
+the weighting mechanism uses position or time.</p>
+<p>A sequence model with positional information can distinguish those orders. For a
+training target at time t, its input must stop before t. A causal attention mask
+prevents one position from seeing later positions, but cannot repair a data loader
+that already included the target in its history.</p>
+<h2 id="application-to-this-project">Application to this project</h2>
+<p>MovieLens genre flags can become a multi-hot content vector. An item tower might
+combine an ID embedding with a projection of genre features. A content-only path
+is needed for unseen items; concatenating an untrained new ID vector is not a
+cold-start solution. Track the original-to-contiguous item mapping when loading
+<code>u.item</code>; the baseline reference does not yet load genre features.</p>
+<h2 id="implement-it">Implement it</h2>
+<ol>
+<li>Extend data loading to preserve mappings and join genre flags to item IDs.</li>
+<li>Compare ID-only, genre-only, and ID+genre item towers.</li>
+<li>Replace user-ID lookup with a masked mean of pre-target training-history embeddings.</li>
+<li>Define padding and an empty-history fallback; test that padding does not alter pooling.</li>
+<li>Add learned pooling, then a causal sequence encoder with positions.</li>
+<li>Keep split, dimensions/budget, and evaluation policy comparable; report rare-item and heavy-user slices.</li>
+</ol>
+<p>Read Airbnb embeddings and SASRec; PinSage is an optional graph extension.
+Record whether extra compute buys better recall instead of assuming it will.</p>
+<h2 id="self-check">Self-check</h2>
+<ul>
+<li>What does attention add if histories have no position or time signal?</li>
+<li>Why must genre joins use a saved mapping rather than row order by assumption?</li>
+<li>Can one user vector cover two unrelated interests without compromising retrieval?</li>
+</ul>
+<p>Next: <a href="lesson/7/">ads-style behavior</a>.</p></article></main>
+  <noscript>This learning site needs JavaScript for the interactive diagrams. Read the full lessons at github.com/ericsheng495/ads-retrieval-from-scratch/tree/main/tutorials.</noscript>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

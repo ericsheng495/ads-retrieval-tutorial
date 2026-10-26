@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../">
+<meta name="initial-route" content="/budget-split">
+<meta name="content-url" content="assets/a136279ed9f0/content.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5ef">
+  <meta name="description" content="Learn recommendation and ranking from zero, then build ML retrieval. Beginner primers, interactive diagrams, all ten Snap ad-ranking references, and PyTorch exercises.">
+  <title>Budget-split design: isolate the resource that couples groups — Retrieval Lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23285c48'/%3E%3Ctext x='11' y='30' fill='white' font-family='Georgia' font-size='32' font-style='italic'%3Er%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/a136279ed9f0/styles.css">
+  <script src="assets/a136279ed9f0/primers.js" defer></script>
+  <script src="assets/a136279ed9f0/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to lesson</a>
+  <div class="reading-progress" aria-hidden="true"><span id="reading-fill"></span></div>
+  <header class="mobile-header"><a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span> Retrieval Lab</a><button id="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button></header>
+  <aside id="sidebar" class="sidebar" aria-label="Course navigation">
+    <a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span><span>Retrieval Lab<small>A FIELD GUIDE TO CANDIDATE GENERATION</small></span></a>
+    <label class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find a concept…" aria-label="Search lessons and papers"><kbd>/</kbd></label>
+    <div id="search-results" aria-live="polite" hidden></div>
+    <nav>
+      <a class="nav-overview" href="#/">Overview <span>↗</span></a>
+      <p class="nav-label">START HERE · NO BACKGROUND NEEDED</p>
+      <a class="resource-link" href="#/foundations"><span>01</span> Recommenders from zero</a>
+      <a class="resource-link" href="#/ranking"><span>02</span> How ranking works</a>
+      <a class="resource-link" href="#/two-stage"><span>↳</span> How the stages fit together</a>
+      <a class="resource-link" href="#/models"><span>03</span> Snap’s ten references</a>
+      <a class="resource-link" href="#/glossary"><span>?</span> Plain-language glossary</a>
+      <p class="nav-label">THE LEARNING PATH</p>
+      <div id="lesson-nav"></div>
+      <p class="nav-label">YOUR WORKBENCH</p>
+      <a class="resource-link" href="#/start"><span>↳</span> Your first implementation</a>
+      <a class="resource-link" href="#/roadmap"><span>□</span> Eight-week roadmap</a>
+      <a class="resource-link" href="#/papers"><span>▤</span> Paper library</a>
+      <a class="resource-link" href="#/evaluation"><span>≋</span> Evaluation contract</a>
+    </nav>
+    <div class="course-progress"><div><span>Your progress</span><strong id="progress-label">0 / 9</strong></div><progress id="course-progress" value="0" max="9">0 of 9 lessons</progress><small>Saved on this browser.</small></div>
+    <a class="repo-link" href="https://github.com/ericsheng495/ads-retrieval-from-scratch" target="_blank" rel="noopener">Project repository <span>↗</span></a>
+  </aside>
+  <main id="main" tabindex="-1"><header class="reader-head"><h1>Budget-split design: isolate the resource that couples groups</h1></header><article class="article"><h2 id="concept">Concept</h2>
+<p>Suppose treatment and control users compete for spending from the same campaign.
+A model that spends more in treatment can leave less budget for control. The
+groups interact through that shared resource even if user assignments are random.</p>
+<p>Liu, Mao, and Kang propose budget-split experimentation: split the relevant
+buyer/campaign budget across experimental marketplaces associated with randomized
+seller/member partitions. The design's causal guarantees depend on its stated
+market and allocation assumptions. The mechanism is resource isolation, not
+merely adding a budget column to a results table.
+<a href="https://arxiv.org/abs/2012.08724">Paper</a>, 2020 preprint.</p>
+<h2 id="architecture">Architecture</h2>
+<div class="architecture-slot" data-diagram="budget-split"></div>
+
+<p>The key contrast is a common spending pool versus per-arm accounting and
+eligibility. A spending debit in one isolated arm should not reduce another
+arm's budget allocation under the design.</p>
+<h2 id="worked-example">Worked example</h2>
+<p>An invented campaign has budget 100 units. With one shared pool, treatment
+could spend 80 and leave at most 20 for control. A naive comparison would
+mix the model's effect with unequal access to budget.</p>
+<p>For equally sized experimental partitions, allocate 50 to each arm. If treatment
+spends 50, control's allocation remains 50. For a 20%/80% traffic split, a toy
+proportional allocation would be 20/80 rather than 50/50. Actual design requires
+consistent population, allocation, pacing, and outcome definitions.</p>
+<p>This example illustrates accounting isolation. It does not prove that splitting
+budgets eliminates every form of marketplace interference or that rollout
+effects can be inferred without checking assumptions.</p>
+<h2 id="implementation-exercise">Implementation exercise</h2>
+<p>Build a two-arm ledger: campaign ID, initial per-arm budget, remaining budget,
+and spend transactions. Assert that arm-A spend cannot mutate arm-B's balance.
+Simulate requests with arm assignment, available ads, and a simple spending rule.
+Compare the common-pool and isolated-ledger versions under the same request stream.</p>
+<p>Report per-arm allocation, delivery, spend, and outcomes. Include a low-demand
+case where budgets do not bind. Then write what remains unmodeled: changing
+advertiser behavior, pacing adaptation, cross-campaign substitution, and delayed outcomes.
+Keep a simulation demonstration separate from an unbiasedness claim.</p>
+<h2 id="check-your-understanding">Check your understanding</h2>
+<p>Which shared state must be separated? Why should allocation reflect the design's
+traffic/population split? What extra mechanisms could still couple the arms?</p>
+<p>Return to <a href="models/">the model map</a> or <a href="snap-overview/">the Snap post companion</a>.</p></article></main>
+  <noscript>This learning site needs JavaScript for the interactive diagrams. Read the full lessons at github.com/ericsheng495/ads-retrieval-from-scratch/tree/main/tutorials.</noscript>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

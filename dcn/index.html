@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../">
+<meta name="initial-route" content="/dcn">
+<meta name="content-url" content="assets/a136279ed9f0/content.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5ef">
+  <meta name="description" content="Learn recommendation and ranking from zero, then build ML retrieval. Beginner primers, interactive diagrams, all ten Snap ad-ranking references, and PyTorch exercises.">
+  <title>DCN: learn explicit feature crosses — Retrieval Lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23285c48'/%3E%3Ctext x='11' y='30' fill='white' font-family='Georgia' font-size='32' font-style='italic'%3Er%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/a136279ed9f0/styles.css">
+  <script src="assets/a136279ed9f0/primers.js" defer></script>
+  <script src="assets/a136279ed9f0/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to lesson</a>
+  <div class="reading-progress" aria-hidden="true"><span id="reading-fill"></span></div>
+  <header class="mobile-header"><a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span> Retrieval Lab</a><button id="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button></header>
+  <aside id="sidebar" class="sidebar" aria-label="Course navigation">
+    <a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span><span>Retrieval Lab<small>A FIELD GUIDE TO CANDIDATE GENERATION</small></span></a>
+    <label class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find a concept…" aria-label="Search lessons and papers"><kbd>/</kbd></label>
+    <div id="search-results" aria-live="polite" hidden></div>
+    <nav>
+      <a class="nav-overview" href="#/">Overview <span>↗</span></a>
+      <p class="nav-label">START HERE · NO BACKGROUND NEEDED</p>
+      <a class="resource-link" href="#/foundations"><span>01</span> Recommenders from zero</a>
+      <a class="resource-link" href="#/ranking"><span>02</span> How ranking works</a>
+      <a class="resource-link" href="#/two-stage"><span>↳</span> How the stages fit together</a>
+      <a class="resource-link" href="#/models"><span>03</span> Snap’s ten references</a>
+      <a class="resource-link" href="#/glossary"><span>?</span> Plain-language glossary</a>
+      <p class="nav-label">THE LEARNING PATH</p>
+      <div id="lesson-nav"></div>
+      <p class="nav-label">YOUR WORKBENCH</p>
+      <a class="resource-link" href="#/start"><span>↳</span> Your first implementation</a>
+      <a class="resource-link" href="#/roadmap"><span>□</span> Eight-week roadmap</a>
+      <a class="resource-link" href="#/papers"><span>▤</span> Paper library</a>
+      <a class="resource-link" href="#/evaluation"><span>≋</span> Evaluation contract</a>
+    </nav>
+    <div class="course-progress"><div><span>Your progress</span><strong id="progress-label">0 / 9</strong></div><progress id="course-progress" value="0" max="9">0 of 9 lessons</progress><small>Saved on this browser.</small></div>
+    <a class="repo-link" href="https://github.com/ericsheng495/ads-retrieval-from-scratch" target="_blank" rel="noopener">Project repository <span>↗</span></a>
+  </aside>
+  <main id="main" tabindex="-1"><header class="reader-head"><h1>DCN: learn explicit feature crosses</h1></header><article class="article"><h2 id="concept">Concept</h2>
+<p>Manual crosses require choosing combinations in advance. A <strong>cross network</strong>
+repeatedly combines its original input with its evolving representation. DCN
+places that branch alongside a conventional deep network.</p>
+<p>In the original cross layer, with column-vector notation:</p>
+<pre><code class="language-text">x_next = x0 * dot(w, x_current) + b + x_current
+</code></pre>
+<p><code>x0</code> is the original concatenated feature/embedding vector, <code>w</code> is learned,
+and the dot product is a scalar. Multiplying the original coordinates by that
+scalar introduces products between input coordinates. Repeated layers construct
+bounded-degree interactions; a residual addition retains the previous representation.
+<a href="https://arxiv.org/abs/1708.05123">Wang et al., 2017</a>.</p>
+<h2 id="architecture">Architecture</h2>
+<div class="architecture-slot" data-diagram="dcn"></div>
+
+<p>The cross and deep representations feed a final prediction head. “Cross” here
+means feature multiplication, not cross-validation or a transformer cross-attention layer.</p>
+<h2 id="worked-example">Worked example</h2>
+<p>Use invented numbers <code>x0=x_current=[1,2]</code>, <code>w=[0.5,0.25]</code>, and <code>b=[0,0]</code>.
+The scalar dot product is <code>0.5*1 + 0.25*2 = 1</code>. Therefore:</p>
+<pre><code class="language-text">x_next = [1,2] * 1 + [0,0] + [1,2] = [2,4]
+</code></pre>
+<p>To see the interaction, expand the first coordinate symbolically:
+<code>x01*(w1*x01 + w2*x02) + b1 + x01</code>. The term <code>w2*x01*x02</code> is an explicit
+pair interaction. The numbers alone hide that structure; the expansion exposes it.</p>
+<h2 id="implementation-exercise">Implementation exercise</h2>
+<p>Write a PyTorch layer taking <code>[batch, d]</code> tensors. Compute a <code>[batch, 1]</code> scalar
+projection, broadcast its product with <code>x0</code>, then add bias and residual.
+Verify the example by hand. Stack two layers while passing the same <code>x0</code> to both.
+Compare an MLP, a cross-only model, and their combination on the same synthetic task.</p>
+<p>Do not accidentally replace the scalar with an unrestricted matrix layer; that
+changes the original architecture toward DCN V2. Track training cost and validation
+loss rather than assuming more cross layers improve a sparse dataset.</p>
+<h2 id="check-your-understanding">Check your understanding</h2>
+<p>Which tensor remains fixed across cross layers? What prevents this joint
+user/item scoring function from automatically being a two-tower retriever?</p>
+<p>Next: <a href="deepfm/">DeepFM</a>, or <a href="dcn-v2/">DCN V2</a> for the direct continuation.</p></article></main>
+  <noscript>This learning site needs JavaScript for the interactive diagrams. Read the full lessons at github.com/ericsheng495/ads-retrieval-from-scratch/tree/main/tutorials.</noscript>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

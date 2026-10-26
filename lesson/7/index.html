@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../../">
+<meta name="initial-route" content="/lesson/7">
+<meta name="content-url" content="assets/a136279ed9f0/content.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5ef">
+  <meta name="description" content="Learn recommendation and ranking from zero, then build ML retrieval. Beginner primers, interactive diagrams, all ten Snap ad-ranking references, and PyTorch exercises.">
+  <title>The ads serving layer — Retrieval Lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23285c48'/%3E%3Ctext x='11' y='30' fill='white' font-family='Georgia' font-size='32' font-style='italic'%3Er%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/a136279ed9f0/styles.css">
+  <script src="assets/a136279ed9f0/primers.js" defer></script>
+  <script src="assets/a136279ed9f0/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to lesson</a>
+  <div class="reading-progress" aria-hidden="true"><span id="reading-fill"></span></div>
+  <header class="mobile-header"><a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span> Retrieval Lab</a><button id="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button></header>
+  <aside id="sidebar" class="sidebar" aria-label="Course navigation">
+    <a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span><span>Retrieval Lab<small>A FIELD GUIDE TO CANDIDATE GENERATION</small></span></a>
+    <label class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find a concept…" aria-label="Search lessons and papers"><kbd>/</kbd></label>
+    <div id="search-results" aria-live="polite" hidden></div>
+    <nav>
+      <a class="nav-overview" href="#/">Overview <span>↗</span></a>
+      <p class="nav-label">START HERE · NO BACKGROUND NEEDED</p>
+      <a class="resource-link" href="#/foundations"><span>01</span> Recommenders from zero</a>
+      <a class="resource-link" href="#/ranking"><span>02</span> How ranking works</a>
+      <a class="resource-link" href="#/two-stage"><span>↳</span> How the stages fit together</a>
+      <a class="resource-link" href="#/models"><span>03</span> Snap’s ten references</a>
+      <a class="resource-link" href="#/glossary"><span>?</span> Plain-language glossary</a>
+      <p class="nav-label">THE LEARNING PATH</p>
+      <div id="lesson-nav"></div>
+      <p class="nav-label">YOUR WORKBENCH</p>
+      <a class="resource-link" href="#/start"><span>↳</span> Your first implementation</a>
+      <a class="resource-link" href="#/roadmap"><span>□</span> Eight-week roadmap</a>
+      <a class="resource-link" href="#/papers"><span>▤</span> Paper library</a>
+      <a class="resource-link" href="#/evaluation"><span>≋</span> Evaluation contract</a>
+    </nav>
+    <div class="course-progress"><div><span>Your progress</span><strong id="progress-label">0 / 9</strong></div><progress id="course-progress" value="0" max="9">0 of 9 lessons</progress><small>Saved on this browser.</small></div>
+    <a class="repo-link" href="https://github.com/ericsheng495/ads-retrieval-from-scratch" target="_blank" rel="noopener">Project repository <span>↗</span></a>
+  </aside>
+  <main id="main" tabindex="-1"><header class="reader-head"><h1>The ads serving layer</h1></header><article class="article"><h2 id="concept">Concept</h2>
+<p>A high score does not imply an item can be served. Eligibility can depend on
+targeting, budgets, policy, inventory, or geography. Cold start asks what to do
+without interaction history. Freshness asks how quickly a changed catalog or
+model becomes available to retrieval.</p>
+<p>These concerns interact: new items need representations, eligibility can change
+faster than vectors, and a new model defines a different embedding space.</p>
+<h3 id="relevance-permission-and-availability-differ">Relevance, permission, and availability differ</h3>
+<p>An attractive ad can be unavailable because its campaign has no budget. It
+can fail targeting or policy checks regardless of model score. A prohibited
+candidate should not fill an empty slot just because few alternatives remain.</p>
+<p>Separate content freshness, catalog freshness, eligibility freshness, and model
+freshness. A changed creative can require new vectors; a changed budget may
+only require metadata updates. A changed encoder may require a compatible new
+index rather than appending vectors to an old coordinate system.</p>
+<p>Likewise, distinguish a completely new user from a sparse known user, and a new
+item from an unpopular trained item. A fallback is a defined alternative policy,
+such as eligible popularity, whose behavior you can test. It should not be an
+accidental zero-vector output.</p>
+<h2 id="worked-example">Worked example</h2>
+<p>An ANN query returns items <code>[A,B,C,D]</code>; only C and D are eligible, but K=3. Filtering
+that result leaves two items. Overfetching six candidates might find a third;
+prefiltering searches only eligible candidates but may require index partitions,
+filter-aware search, or more expensive work.</p>
+<p>Suppose a held-out positive is ineligible. Counting its absence as a model miss
+confuses relevance with feasibility. Report both the proportion of targets that
+are eligible and recall among eligible targets, along with empty-result rates.</p>
+<p>Now imagine item vectors were encoded with model v1 while queries use v2. Vector
+dimensions can match even when their coordinates no longer mean the same thing.
+A shape check cannot detect this; compatible model/export metadata is required.</p>
+<h2 id="application-to-this-project">Application to this project</h2>
+<p>Use genre categories and deterministic mock budgets as an eligibility exercise.
+These are simulations, not real ads constraints. Hold out complete items to test
+content-only cold start, rather than claiming a rare training item is unseen.
+For new users, explicitly serve a popularity/content fallback.</p>
+<h2 id="implement-it">Implement it</h2>
+<ol>
+<li>Define an eligibility function with query-time attributes and test edge cases.</li>
+<li>Compare exact eligible search with ANN+filter+overfetch; measure eligible recall and latency.</li>
+<li>Train a content encoder, hold out item IDs, and score their content without an ID lookup.</li>
+<li>Insert a newly encoded item into an index and measure time-to-retrievable.</li>
+<li>Persist model hash, preprocessing version, ID mapping, and build time with the index.</li>
+<li>Reject mismatched query/index versions; separately test insertions, deletions, and budget updates.</li>
+<li>Simulate exploration slots and quantify candidate displacement.</li>
+</ol>
+<p>Read DropoutNet and Facebook EBR. The existing export checker in <a href="https://github.com/ericsheng495/ads-retrieval-from-scratch/blob/main/src/ann.py">ann.py</a>
+guards paired artifacts; a persisted serving index and these ads behaviors remain
+your implementation exercises. Exploration's online benefit needs a real experiment.</p>
+<h2 id="self-check">Self-check</h2>
+<ul>
+<li>Which changes require recomputing vectors, and which can be eligibility metadata updates?</li>
+<li>Why can simply appending an item fail after changing the embedding model?</li>
+<li>What should happen when fewer than K eligible items exist?</li>
+</ul>
+<p>Next: <a href="lesson/8/">production and transfer</a>.</p></article></main>
+  <noscript>This learning site needs JavaScript for the interactive diagrams. Read the full lessons at github.com/ericsheng495/ads-retrieval-from-scratch/tree/main/tutorials.</noscript>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

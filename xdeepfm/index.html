@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../">
+<meta name="initial-route" content="/xdeepfm">
+<meta name="content-url" content="assets/a136279ed9f0/content.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5ef">
+  <meta name="description" content="Learn recommendation and ranking from zero, then build ML retrieval. Beginner primers, interactive diagrams, all ten Snap ad-ranking references, and PyTorch exercises.">
+  <title>xDeepFM: explicit vector-wise interactions — Retrieval Lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23285c48'/%3E%3Ctext x='11' y='30' fill='white' font-family='Georgia' font-size='32' font-style='italic'%3Er%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/a136279ed9f0/styles.css">
+  <script src="assets/a136279ed9f0/primers.js" defer></script>
+  <script src="assets/a136279ed9f0/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to lesson</a>
+  <div class="reading-progress" aria-hidden="true"><span id="reading-fill"></span></div>
+  <header class="mobile-header"><a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span> Retrieval Lab</a><button id="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button></header>
+  <aside id="sidebar" class="sidebar" aria-label="Course navigation">
+    <a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span><span>Retrieval Lab<small>A FIELD GUIDE TO CANDIDATE GENERATION</small></span></a>
+    <label class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find a concept…" aria-label="Search lessons and papers"><kbd>/</kbd></label>
+    <div id="search-results" aria-live="polite" hidden></div>
+    <nav>
+      <a class="nav-overview" href="#/">Overview <span>↗</span></a>
+      <p class="nav-label">START HERE · NO BACKGROUND NEEDED</p>
+      <a class="resource-link" href="#/foundations"><span>01</span> Recommenders from zero</a>
+      <a class="resource-link" href="#/ranking"><span>02</span> How ranking works</a>
+      <a class="resource-link" href="#/two-stage"><span>↳</span> How the stages fit together</a>
+      <a class="resource-link" href="#/models"><span>03</span> Snap’s ten references</a>
+      <a class="resource-link" href="#/glossary"><span>?</span> Plain-language glossary</a>
+      <p class="nav-label">THE LEARNING PATH</p>
+      <div id="lesson-nav"></div>
+      <p class="nav-label">YOUR WORKBENCH</p>
+      <a class="resource-link" href="#/start"><span>↳</span> Your first implementation</a>
+      <a class="resource-link" href="#/roadmap"><span>□</span> Eight-week roadmap</a>
+      <a class="resource-link" href="#/papers"><span>▤</span> Paper library</a>
+      <a class="resource-link" href="#/evaluation"><span>≋</span> Evaluation contract</a>
+    </nav>
+    <div class="course-progress"><div><span>Your progress</span><strong id="progress-label">0 / 9</strong></div><progress id="course-progress" value="0" max="9">0 of 9 lessons</progress><small>Saved on this browser.</small></div>
+    <a class="repo-link" href="https://github.com/ericsheng495/ads-retrieval-from-scratch" target="_blank" rel="noopener">Project repository <span>↗</span></a>
+  </aside>
+  <main id="main" tabindex="-1"><header class="reader-head"><h1>xDeepFM: explicit vector-wise interactions</h1></header><article class="article"><h2 id="concept">Concept</h2>
+<p>DeepFM's explicit FM term is pairwise. xDeepFM adds a <strong>compressed interaction
+network (CIN)</strong> to build explicit higher-order interactions. It combines a linear
+branch, CIN, and a deep branch.</p>
+<p>CIN forms coordinate-wise products between previous-layer feature vectors and
+original input feature vectors, then learns combinations across their feature
+map pairs. Sum pooling produces a representation for the prediction head.
+This preserves a particular vector-wise interaction structure, complementing
+the implicit patterns learned by the deep branch.
+<a href="https://arxiv.org/abs/1803.05170">Lian et al., KDD 2018</a>.</p>
+<h2 id="architecture">Architecture</h2>
+<div class="architecture-slot" data-diagram="xdeepfm"></div>
+
+<p>For previous map i and original field j, construct the vector
+<code>H_previous[i,:] * X0[j,:]</code>. A learned weight for a new map mixes these pair-product
+vectors; it is shared across the embedding-coordinate axis.</p>
+<h2 id="worked-example">Worked example</h2>
+<p>Take two original toy fields <code>[1,2]</code> and <code>[3,4]</code>. Their coordinate-wise product
+is <code>[3,8]</code>, while their dot product is the scalar 11. Keeping <code>[3,8]</code> allows a
+later layer to multiply with another field before pooling. That distinction is
+the reason “CIN is just an FM dot product repeated” misses important structure.</p>
+<p>For a one-map toy CIN with only this pair's weight set to 1, the map output is
+<code>[3,8]</code>, and sum pooling gives 11. Adding another layer can create higher-order
+products while still using original field vectors.</p>
+<h2 id="implementation-exercise">Implementation exercise</h2>
+<p>Use an input tensor <code>[batch, fields, embedding_dim]</code>. Build a one-layer CIN with
+explicit loops on two fields so every product is inspectable. Then vectorize
+pair creation and learned mixing; confirm the same toy output. Add pooling and
+combine with linear and MLP logits.</p>
+<p>Compare FM-only explicit interactions against CIN at controlled capacity and
+training cost. Intermediate pair tensors can be large: count feature maps and
+embedding dimensions before expanding them. You are testing a mechanism, not
+reproducing the paper's benchmark by matching one forward pass.</p>
+<h2 id="check-your-understanding">Check your understanding</h2>
+<p>Where do interaction orders increase? What information is lost if you reduce
+every pair to a scalar before creating the next CIN layer?</p>
+<p>Next: <a href="mmoe/">MMoE</a>.</p></article></main>
+  <noscript>This learning site needs JavaScript for the interactive diagrams. Read the full lessons at github.com/ericsheng495/ads-retrieval-from-scratch/tree/main/tutorials.</noscript>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

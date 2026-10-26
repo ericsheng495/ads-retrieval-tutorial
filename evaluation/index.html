@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../">
+<meta name="initial-route" content="/evaluation">
+<meta name="content-url" content="assets/a136279ed9f0/content.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5ef">
+  <meta name="description" content="Learn recommendation and ranking from zero, then build ML retrieval. Beginner primers, interactive diagrams, all ten Snap ad-ranking references, and PyTorch exercises.">
+  <title>Evaluation contract — Retrieval Lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23285c48'/%3E%3Ctext x='11' y='30' fill='white' font-family='Georgia' font-size='32' font-style='italic'%3Er%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/a136279ed9f0/styles.css">
+  <script src="assets/a136279ed9f0/primers.js" defer></script>
+  <script src="assets/a136279ed9f0/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to lesson</a>
+  <div class="reading-progress" aria-hidden="true"><span id="reading-fill"></span></div>
+  <header class="mobile-header"><a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span> Retrieval Lab</a><button id="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button></header>
+  <aside id="sidebar" class="sidebar" aria-label="Course navigation">
+    <a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span><span>Retrieval Lab<small>A FIELD GUIDE TO CANDIDATE GENERATION</small></span></a>
+    <label class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find a concept…" aria-label="Search lessons and papers"><kbd>/</kbd></label>
+    <div id="search-results" aria-live="polite" hidden></div>
+    <nav>
+      <a class="nav-overview" href="#/">Overview <span>↗</span></a>
+      <p class="nav-label">START HERE · NO BACKGROUND NEEDED</p>
+      <a class="resource-link" href="#/foundations"><span>01</span> Recommenders from zero</a>
+      <a class="resource-link" href="#/ranking"><span>02</span> How ranking works</a>
+      <a class="resource-link" href="#/two-stage"><span>↳</span> How the stages fit together</a>
+      <a class="resource-link" href="#/models"><span>03</span> Snap’s ten references</a>
+      <a class="resource-link" href="#/glossary"><span>?</span> Plain-language glossary</a>
+      <p class="nav-label">THE LEARNING PATH</p>
+      <div id="lesson-nav"></div>
+      <p class="nav-label">YOUR WORKBENCH</p>
+      <a class="resource-link" href="#/start"><span>↳</span> Your first implementation</a>
+      <a class="resource-link" href="#/roadmap"><span>□</span> Eight-week roadmap</a>
+      <a class="resource-link" href="#/papers"><span>▤</span> Paper library</a>
+      <a class="resource-link" href="#/evaluation"><span>≋</span> Evaluation contract</a>
+    </nav>
+    <div class="course-progress"><div><span>Your progress</span><strong id="progress-label">0 / 9</strong></div><progress id="course-progress" value="0" max="9">0 of 9 lessons</progress><small>Saved on this browser.</small></div>
+    <a class="repo-link" href="https://github.com/ericsheng495/ads-retrieval-from-scratch" target="_blank" rel="noopener">Project repository <span>↗</span></a>
+  </aside>
+  <main id="main" tabindex="-1"><header class="reader-head"><h1>Evaluation contract</h1></header><article class="article"><h2 id="current-protocol">Current protocol</h2>
+<p>MovieLens-100k ratings ≥4 count as positive feedback. Lower ratings are unused,
+not explicit negatives. Keep the earliest positive per user/item, discard users
+with fewer than three distinct positives, sort by timestamp then item ID, and
+hold out the last two positives per user for validation/test. IDs are remapped
+over the retained catalog, so items with no training positives can exist.</p>
+<p>Validation filters that user's training positives. Test filters training and
+validation positives. The model is not retrained on validation. For every query,
+the held-out target must remain eligible. The same movie may be in training for
+other users; that is expected collaborative learning, not pair leakage.</p>
+<p>This protocol is chronological <strong>within each user only</strong>. Other users' training
+events can occur after a user's evaluation time. It therefore does not establish
+global temporal safety. Phase 2 requires a global cutoff experiment, train-only
+feature statistics, a catalog available at query time, and explicit cold-user/item
+policies before making a deployment-like claim. Even the catalog definition is
+an assumption here; validation/test metadata informs the remapped vocabulary.</p>
+<h2 id="metrics">Metrics</h2>
+<p>With one target per user, Recall@K equals HitRate@K:
+<code>mean(target is present among the first K eligible predictions)</code>.
+It is not precision, CTR, or a calibrated conversion probability.
+Scores are computed against the full retained catalog, not sampled distractors.
+Ties break by catalog ID. Excluded slots are padded with -1 if necessary.</p>
+<p>The exact expected random recall is
+<code>mean(min(K / eligible_catalog_size_for_user, 1))</code>.
+<code>K / n_items</code> only applies to an unfiltered catalog with K ≤ n_items.
+Popularity counts come from training only. Its test and validation metrics use
+the same exclusions as the learned model. Test scores from repeated runs can
+influence human choices; do not call the resulting model selection unbiased.</p>
+<h2 id="training-assumptions">Training assumptions</h2>
+<p>In-batch candidates follow the training interaction distribution, not a uniform
+catalog distribution. Other examples are unobserved candidates, potentially
+false negatives. Duplicate item columns and known training positives contribute
+to positive probability mass in the reference loss. This does not remove all
+false negatives or correct exposure bias. The dense positive mask is practical
+only for this small dataset; use sparse or indexed membership at scale.</p>
+<p>logQ correction concerns the candidate sampling mechanism; it does not solve
+impression/auction selection bias. Derive Q for the actual batch/mixed sampler,
+including duplicates and expected counts, before applying a correction. Do not
+subtract training popularity from inference scores by habit. See Yi and Yang.</p>
+<h2 id="required-phase-2-report">Required Phase 2 report</h2>
+<ul>
+<li>[ ] Identical splits, candidates, exclusions, and K across random/popularity/MF/two-tower.</li>
+<li>[ ] A plain dot-product MF baseline trained with a documented loss; the reference's linear towers are already closely related to MF.</li>
+<li>[ ] Head/tail groups defined with training counts; report group sizes and cold items.</li>
+<li>[ ] Light/heavy groups defined with training user counts, not future activity.</li>
+<li>[ ] Per-user timestamp audit plus the separate global cutoff evaluation.</li>
+<li>[ ] Several seeds and uncertainty estimates for claims beyond the smoke test.</li>
+</ul>
+<p>ANN neighbor overlap and held-out-target Recall@K are distinct: the former asks
+whether an index approximates exact vector search; the latter asks whether the
+model retrieves a relevant target. An ANN benchmark over all user embeddings is
+not a future-query production latency measurement.</p>
+<p>These evaluation risks connect to
+<a href="https://proceedings.mlr.press/v48/schnabel16.html">Schnabel et al. (2016)</a>.</p></article></main>
+  <noscript>This learning site needs JavaScript for the interactive diagrams. Read the full lessons at github.com/ericsheng495/ads-retrieval-from-scratch/tree/main/tutorials.</noscript>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

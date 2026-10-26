@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../">
+<meta name="initial-route" content="/foundations">
+<meta name="content-url" content="assets/a136279ed9f0/content.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5ef">
+  <meta name="description" content="Learn recommendation and ranking from zero, then build ML retrieval. Beginner primers, interactive diagrams, all ten Snap ad-ranking references, and PyTorch exercises.">
+  <title>Start here: how recommendation systems work — Retrieval Lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23285c48'/%3E%3Ctext x='11' y='30' fill='white' font-family='Georgia' font-size='32' font-style='italic'%3Er%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/a136279ed9f0/styles.css">
+  <script src="assets/a136279ed9f0/primers.js" defer></script>
+  <script src="assets/a136279ed9f0/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to lesson</a>
+  <div class="reading-progress" aria-hidden="true"><span id="reading-fill"></span></div>
+  <header class="mobile-header"><a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span> Retrieval Lab</a><button id="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button></header>
+  <aside id="sidebar" class="sidebar" aria-label="Course navigation">
+    <a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span><span>Retrieval Lab<small>A FIELD GUIDE TO CANDIDATE GENERATION</small></span></a>
+    <label class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find a concept…" aria-label="Search lessons and papers"><kbd>/</kbd></label>
+    <div id="search-results" aria-live="polite" hidden></div>
+    <nav>
+      <a class="nav-overview" href="#/">Overview <span>↗</span></a>
+      <p class="nav-label">START HERE · NO BACKGROUND NEEDED</p>
+      <a class="resource-link" href="#/foundations"><span>01</span> Recommenders from zero</a>
+      <a class="resource-link" href="#/ranking"><span>02</span> How ranking works</a>
+      <a class="resource-link" href="#/two-stage"><span>↳</span> How the stages fit together</a>
+      <a class="resource-link" href="#/models"><span>03</span> Snap’s ten references</a>
+      <a class="resource-link" href="#/glossary"><span>?</span> Plain-language glossary</a>
+      <p class="nav-label">THE LEARNING PATH</p>
+      <div id="lesson-nav"></div>
+      <p class="nav-label">YOUR WORKBENCH</p>
+      <a class="resource-link" href="#/start"><span>↳</span> Your first implementation</a>
+      <a class="resource-link" href="#/roadmap"><span>□</span> Eight-week roadmap</a>
+      <a class="resource-link" href="#/papers"><span>▤</span> Paper library</a>
+      <a class="resource-link" href="#/evaluation"><span>≋</span> Evaluation contract</a>
+    </nav>
+    <div class="course-progress"><div><span>Your progress</span><strong id="progress-label">0 / 9</strong></div><progress id="course-progress" value="0" max="9">0 of 9 lessons</progress><small>Saved on this browser.</small></div>
+    <a class="repo-link" href="https://github.com/ericsheng495/ads-retrieval-from-scratch" target="_blank" rel="noopener">Project repository <span>↗</span></a>
+  </aside>
+  <main id="main" tabindex="-1"><header class="reader-head"><h1>Start here: how recommendation systems work</h1></header><article class="article"><p>You do not need a background in recommenders to start. Assume you can read a
+small Python function. We will define the ML vocabulary as it appears.</p>
+<p>Our running example is <strong>Mira opening an app</strong>. The app can show a hiking-boot ad,
+a coffee subscription, or a mobile game. How should it decide? Every number in
+this example is invented for learning, not a claim about a real platform.</p>
+<h2 id="1-what-is-the-system-trying-to-decide">1. What is the system trying to decide?</h2>
+<p>A <strong>recommendation</strong> is a choice about what to show someone. A <strong>request</strong> is one
+occasion when the app needs that choice. An <strong>item</strong> is anything that could be
+shown: a video, product, movie, or ad. The <strong>catalog</strong> is the collection of items.</p>
+<p>There is no universal definition of the “best” item. You must choose an
+<strong>objective</strong>, meaning the outcome you want to improve. A movie service might
+care about enjoyable viewing; an advertiser might care about purchases. A click
+is easier to observe, but more clicks need not mean more satisfaction or purchases.</p>
+<p>The request usually includes <strong>context</strong>: time, device, surface, recent activity,
+and other available information. Mira may want a quick coffee offer during a
+commute and hiking equipment while planning a trip. Personalization can change
+with the request even for the same person.</p>
+<p>Search and recommendation overlap. Search supplies an explicit query; a home
+feed often has to infer intent from context and history. Neither task requires
+that the first model you build be a neural network.</p>
+<h2 id="2-what-evidence-does-the-system-have">2. What evidence does the system have?</h2>
+<p>A <strong>feature</strong> is an input known when making a prediction. A <strong>label</strong> is the
+outcome we later use to judge that prediction. A training <strong>example</strong> pairs
+inputs with an observed label.</p>
+<table>
+<thead>
+<tr>
+<th>Moment</th>
+<th>What we know</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Before showing an ad</td>
+<td>Mira's earlier activity, ad category, current time</td>
+<td>Features</td>
+</tr>
+<tr>
+<td>When an ad is displayed</td>
+<td>Which ad appeared, where, and under which model</td>
+<td>Impression log</td>
+</tr>
+<tr>
+<td>After display</td>
+<td>Whether a click or qualifying purchase occurred</td>
+<td>Possible labels</td>
+</tr>
+</tbody>
+</table>
+<p>An <strong>impression</strong> is a recorded display opportunity under the product's logging
+definition. A <strong>click</strong> is one interaction. A <strong>conversion</strong> is a defined outcome,
+such as an app install or purchase, with a specified attribution/window rule.
+They are different events. Some purchases follow no recorded click.</p>
+<p>For a click model, a training row might be:</p>
+<pre><code class="language-text">features: user=Mira, category=hiking, previous_hiking_views=3, hour=18
+label: clicked=1
+</code></pre>
+<p><code>clicked=1</code> is a label, not an input available before the impression. Accidentally
+using it as an input is <strong>leakage</strong>: the model gets information from the answer.</p>
+<p>An explicit rating such as five stars asks for a stated preference. An implicit
+signal such as a click infers preference from behavior. A missing click on a
+shown ad is an observed nonclick under that exposure. A missing click on an ad
+Mira never saw is an unknown outcome, not proof of dislike.</p>
+<h2 id="3-start-with-recommendations-you-can-explain">3. Start with recommendations you can explain</h2>
+<p>A <strong>baseline</strong> is a simple approach you can compare against. Returning popular
+items is a useful baseline: rank by historical interaction count and exclude
+ineligible items. It provides useful suggestions even before personalizing.
+Its weakness is giving the same ordering to people with different interests.</p>
+<p><strong>Content-based recommendation</strong> uses item descriptions. If Mira likes hiking
+content, hiking-gear features may help find other items she would like.
+<strong>Collaborative filtering</strong> learns from patterns across people's interactions:
+Mira's history overlaps with Alex's, so an item Alex enjoyed can be a candidate
+for Mira even without similar descriptions. These approaches can be combined.
+See Google's introductions to <a href="https://developers.google.com/machine-learning/recommendation/content-based/basics">content-based</a>
+and <a href="https://developers.google.com/machine-learning/recommendation/collaborative/basics">collaborative filtering</a>.</p>
+<p>Consider this deliberately tiny interaction table:</p>
+<table>
+<thead>
+<tr>
+<th>Person</th>
+<th style="text-align: right;">Hiking boots</th>
+<th style="text-align: right;">Trail guide</th>
+<th style="text-align: right;">Coffee offer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mira</td>
+<td style="text-align: right;">clicked</td>
+<td style="text-align: right;">clicked</td>
+<td style="text-align: right;">unknown</td>
+</tr>
+<tr>
+<td>Alex</td>
+<td style="text-align: right;">clicked</td>
+<td style="text-align: right;">clicked</td>
+<td style="text-align: right;">clicked</td>
+</tr>
+<tr>
+<td>Jo</td>
+<td style="text-align: right;">unknown</td>
+<td style="text-align: right;">unknown</td>
+<td style="text-align: right;">clicked</td>
+</tr>
+</tbody>
+</table>
+<p>Collaborative patterns can suggest the coffee offer to Mira. They do not prove
+she will like it. The table is sparse: most real user/item outcomes are unknown.
+Patterns can also reflect what the earlier system chose to display.</p>
+<h2 id="4-why-there-are-several-models-in-one-request">4. Why there are several models in one request</h2>
+<div class="architecture-slot" data-diagram="request-loop"></div>
+
+<p>With three items, scoring every item is easy. With millions, an expensive model
+for every possible pair can exceed the response-time budget. A staged system
+spends cheap computation broadly and expensive computation on a smaller set.</p>
+<ol>
+<li><strong>Eligibility:</strong> remove items that cannot be shown under current rules.</li>
+<li><strong>Retrieval / candidate generation:</strong> find a manageable shortlist with cheap scores.</li>
+<li><strong>Ranking:</strong> use richer information to score the remaining candidates.</li>
+<li><strong>Final selection:</strong> apply product rules or an auction to choose what appears.</li>
+<li><strong>Feedback:</strong> log what was shown and what happened, creating future training data.</li>
+</ol>
+<p>Different candidate generators may contribute popular items, semantic matches,
+or content matches. Their scores need not mean the same thing. A later ranker
+can give the merged shortlist a common score. The word “ranking” can describe
+the overall ordering task or the specific heavy-scoring stage; read it in context.</p>
+<h2 id="5-a-score-is-a-statement-about-a-task">5. A score is a statement about a task</h2>
+<p>Suppose our invented model predicts these probabilities <strong>per impression</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Ad</th>
+<th style="text-align: right;">Probability of click</th>
+<th style="text-align: right;">Probability of conversion</th>
+<th style="text-align: right;">Value per conversion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hiking boots</td>
+<td style="text-align: right;">0.06</td>
+<td style="text-align: right;">0.01</td>
+<td style="text-align: right;">5 units</td>
+</tr>
+<tr>
+<td>Coffee offer</td>
+<td style="text-align: right;">0.04</td>
+<td style="text-align: right;">0.02</td>
+<td style="text-align: right;">3 units</td>
+</tr>
+<tr>
+<td>Mobile game</td>
+<td style="text-align: right;">0.12</td>
+<td style="text-align: right;">0.004</td>
+<td style="text-align: right;">4 units</td>
+</tr>
+</tbody>
+</table>
+<p>Maximizing predicted clicks selects the game. Maximizing predicted conversions
+selects coffee. Multiplying conversion probability by the illustrative value
+gives 0.05, 0.06, and 0.016 units per impression; coffee wins again. A probability
+of 0.02 means two expected events per 100 comparable opportunities, not a promise
+that exactly two will occur.</p>
+<p>These are unconditional per-impression conversion probabilities. If you instead
+have a conversion probability <strong>given a click</strong>, you need to account for the
+click event before treating it as an expected outcome per impression. Keep the
+conditioning and attribution definitions consistent.</p>
+<p>Real auctions include constraints and pricing rules. Our value multiplication is
+a teaching objective, not a description of Snap's auction formula.</p>
+<h2 id="6-training-and-serving-are-different-activities">6. Training and serving are different activities</h2>
+<p>During <strong>training</strong>, the system adjusts model parameters using historical
+examples. A parameter is a learned number such as a coefficient or an embedding
+coordinate. A <strong>loss</strong> measures how badly predictions disagree with the training
+target. An optimizer changes parameters to reduce the loss.</p>
+<p>During <strong>serving / inference</strong>, the model uses its current parameters on a new
+request. It cannot look at the future click. Training is like practicing with
+answered exercises; inference is answering the next question with what you learned.</p>
+<p>Training can run on a schedule while serving continues. Item representations
+can be precomputed; user/request representations may need to be computed when
+the request arrives. These are engineering choices with freshness and cost tradeoffs.</p>
+<h2 id="7-why-testing-on-the-future-matters">7. Why testing on the future matters</h2>
+<p>A model can memorize earlier examples without improving new decisions. Training
+data teaches it; validation data helps choose settings; a reserved test period
+checks the result after those choices. Repeatedly choosing based on test results
+turns that test into more development data.</p>
+<p>An offline metric asks a limited question about a fixed dataset. An online A/B
+experiment compares actual outcomes under two policies. In a marketplace, one
+group may change the inventory or budgets available to another. Later lessons
+explain why randomizing users alone does not automatically solve that problem.</p>
+<h2 id="8-what-this-project-teaches-first">8. What this project teaches first</h2>
+<p>We start with retrieval on MovieLens: user/movie positive pairs, independently
+encoded vectors, and a shortlist metric. Movie ratings do not provide ad
+impressions, bids, or conversion labels. The <a href="ranking/">ranking primer</a> teaches
+how a scoring model works before the model architecture lessons. Then return
+to <a href="lesson/0/">lesson 0</a> to build the retrieval loop.</p>
+<p>Before moving on, explain these without looking: user, item, context, feature,
+label, impression, candidate, score, loss, training, and inference. If a term is
+still fuzzy, use the <a href="glossary/">plain-language glossary</a>.
+For the bridge from model diagrams to a real request, read
+<a href="two-stage/">how the two stages fit together</a>.</p></article></main>
+  <noscript>This learning site needs JavaScript for the interactive diagrams. Read the full lessons at github.com/ericsheng495/ads-retrieval-from-scratch/tree/main/tutorials.</noscript>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../">
+<meta name="initial-route" content="/mmoe">
+<meta name="content-url" content="assets/a136279ed9f0/content.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5ef">
+  <meta name="description" content="Learn recommendation and ranking from zero, then build ML retrieval. Beginner primers, interactive diagrams, all ten Snap ad-ranking references, and PyTorch exercises.">
+  <title>MMoE: each task chooses its shared experts — Retrieval Lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23285c48'/%3E%3Ctext x='11' y='30' fill='white' font-family='Georgia' font-size='32' font-style='italic'%3Er%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/a136279ed9f0/styles.css">
+  <script src="assets/a136279ed9f0/primers.js" defer></script>
+  <script src="assets/a136279ed9f0/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to lesson</a>
+  <div class="reading-progress" aria-hidden="true"><span id="reading-fill"></span></div>
+  <header class="mobile-header"><a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span> Retrieval Lab</a><button id="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button></header>
+  <aside id="sidebar" class="sidebar" aria-label="Course navigation">
+    <a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span><span>Retrieval Lab<small>A FIELD GUIDE TO CANDIDATE GENERATION</small></span></a>
+    <label class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find a concept…" aria-label="Search lessons and papers"><kbd>/</kbd></label>
+    <div id="search-results" aria-live="polite" hidden></div>
+    <nav>
+      <a class="nav-overview" href="#/">Overview <span>↗</span></a>
+      <p class="nav-label">START HERE · NO BACKGROUND NEEDED</p>
+      <a class="resource-link" href="#/foundations"><span>01</span> Recommenders from zero</a>
+      <a class="resource-link" href="#/ranking"><span>02</span> How ranking works</a>
+      <a class="resource-link" href="#/two-stage"><span>↳</span> How the stages fit together</a>
+      <a class="resource-link" href="#/models"><span>03</span> Snap’s ten references</a>
+      <a class="resource-link" href="#/glossary"><span>?</span> Plain-language glossary</a>
+      <p class="nav-label">THE LEARNING PATH</p>
+      <div id="lesson-nav"></div>
+      <p class="nav-label">YOUR WORKBENCH</p>
+      <a class="resource-link" href="#/start"><span>↳</span> Your first implementation</a>
+      <a class="resource-link" href="#/roadmap"><span>□</span> Eight-week roadmap</a>
+      <a class="resource-link" href="#/papers"><span>▤</span> Paper library</a>
+      <a class="resource-link" href="#/evaluation"><span>≋</span> Evaluation contract</a>
+    </nav>
+    <div class="course-progress"><div><span>Your progress</span><strong id="progress-label">0 / 9</strong></div><progress id="course-progress" value="0" max="9">0 of 9 lessons</progress><small>Saved on this browser.</small></div>
+    <a class="repo-link" href="https://github.com/ericsheng495/ads-retrieval-from-scratch" target="_blank" rel="noopener">Project repository <span>↗</span></a>
+  </aside>
+  <main id="main" tabindex="-1"><header class="reader-head"><h1>MMoE: each task chooses its shared experts</h1></header><article class="article"><h2 id="concept">Concept</h2>
+<p>Imagine predicting both clicks and purchases. A shared representation can reuse
+useful information, but the tasks may disagree. A click-seeking representation
+need not be the best purchase representation. This is the motivation for flexible
+sharing rather than one mandatory shared trunk.</p>
+<p>MMoE has multiple shared expert subnetworks. Each task has its own input-dependent
+gate, usually a softmax, that mixes expert outputs before its prediction tower.
+The experts can be shared while task-specific gates select different mixtures.
+<a href="https://research.google/pubs/modeling-task-relationships-in-multi-task-learning-with-multi-gate-mixture-of-experts/">Ma et al., KDD 2018</a>.</p>
+<h2 id="architecture">Architecture</h2>
+<div class="architecture-slot" data-diagram="mmoe"></div>
+
+<p>For task t, the representation is <code>sum_i gate_t(i | x) * expert_i(x)</code>.
+The gate probabilities sum to one across experts. They are routing weights,
+not probabilities that a user clicks or converts.</p>
+<h2 id="worked-example">Worked example</h2>
+<p>Two experts output invented vectors <code>e1=[1,0]</code> and <code>e2=[0,2]</code>. The click gate
+uses weights <code>[0.8,0.2]</code>, producing <code>[0.8,0.4]</code>. The purchase gate uses
+<code>[0.3,0.7]</code>, producing <code>[0.3,1.4]</code>. Different prediction heads consume those vectors.</p>
+<p>Both tasks can use both experts. The experts do not need manually assigned
+roles such as “click expert.” Whether specialization develops is an empirical
+question; a gate becoming nearly constant is something to inspect.</p>
+<h2 id="implementation-exercise">Implementation exercise</h2>
+<p>Build two small expert MLPs returning <code>[batch,d]</code>, two gates returning
+<code>[batch,2]</code>, and two heads. Stack expert outputs as <code>[batch,experts,d]</code>, multiply
+by a gate expanded along d, and sum the expert axis. Verify the toy mixtures.</p>
+<p>Define each task's labels, valid-example mask, and loss before adding the
+weighted total loss. Compare separate models, shared-bottom, and MMoE with
+matched budgets. Report both task metrics: an average can hide a regression.
+An all-impression purchase label differs from conversion conditional on a click.</p>
+<h2 id="check-your-understanding">Check your understanding</h2>
+<p>Why is there a separate gate per task? Does a click gate weight of 0.8 imply
+an 80% click probability? What evidence would show negative transfer?</p>
+<p>Next: <a href="ple/">PLE</a>.</p></article></main>
+  <noscript>This learning site needs JavaScript for the interactive diagrams. Read the full lessons at github.com/ericsheng495/ads-retrieval-from-scratch/tree/main/tutorials.</noscript>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

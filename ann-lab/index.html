@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../">
+<meta name="initial-route" content="/ann-lab">
+<meta name="content-url" content="assets/a136279ed9f0/content.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5ef">
+  <meta name="description" content="Learn recommendation and ranking from zero, then build ML retrieval. Beginner primers, interactive diagrams, all ten Snap ad-ranking references, and PyTorch exercises.">
+  <title>Phase 3: ANN lab — Retrieval Lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23285c48'/%3E%3Ctext x='11' y='30' fill='white' font-family='Georgia' font-size='32' font-style='italic'%3Er%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/a136279ed9f0/styles.css">
+  <script src="assets/a136279ed9f0/primers.js" defer></script>
+  <script src="assets/a136279ed9f0/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to lesson</a>
+  <div class="reading-progress" aria-hidden="true"><span id="reading-fill"></span></div>
+  <header class="mobile-header"><a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span> Retrieval Lab</a><button id="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button></header>
+  <aside id="sidebar" class="sidebar" aria-label="Course navigation">
+    <a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span><span>Retrieval Lab<small>A FIELD GUIDE TO CANDIDATE GENERATION</small></span></a>
+    <label class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find a concept…" aria-label="Search lessons and papers"><kbd>/</kbd></label>
+    <div id="search-results" aria-live="polite" hidden></div>
+    <nav>
+      <a class="nav-overview" href="#/">Overview <span>↗</span></a>
+      <p class="nav-label">START HERE · NO BACKGROUND NEEDED</p>
+      <a class="resource-link" href="#/foundations"><span>01</span> Recommenders from zero</a>
+      <a class="resource-link" href="#/ranking"><span>02</span> How ranking works</a>
+      <a class="resource-link" href="#/two-stage"><span>↳</span> How the stages fit together</a>
+      <a class="resource-link" href="#/models"><span>03</span> Snap’s ten references</a>
+      <a class="resource-link" href="#/glossary"><span>?</span> Plain-language glossary</a>
+      <p class="nav-label">THE LEARNING PATH</p>
+      <div id="lesson-nav"></div>
+      <p class="nav-label">YOUR WORKBENCH</p>
+      <a class="resource-link" href="#/start"><span>↳</span> Your first implementation</a>
+      <a class="resource-link" href="#/roadmap"><span>□</span> Eight-week roadmap</a>
+      <a class="resource-link" href="#/papers"><span>▤</span> Paper library</a>
+      <a class="resource-link" href="#/evaluation"><span>≋</span> Evaluation contract</a>
+    </nav>
+    <div class="course-progress"><div><span>Your progress</span><strong id="progress-label">0 / 9</strong></div><progress id="course-progress" value="0" max="9">0 of 9 lessons</progress><small>Saved on this browser.</small></div>
+    <a class="repo-link" href="https://github.com/ericsheng495/ads-retrieval-from-scratch" target="_blank" rel="noopener">Project repository <span>↗</span></a>
+  </aside>
+  <main id="main" tabindex="-1"><header class="reader-head"><h1>Phase 3: ANN lab</h1></header><article class="article"><p>Read Johnson/FAISS and HNSW first; ScaNN is an optional quantization extension.</p>
+<pre><code class="language-bash">python -m pip install -r requirements-ann.txt
+python -m src.ann --run artifacts/movielens-v0 --k 100
+</code></pre>
+<p>The runnable reference exports a table to <code>ann.json</code>: Flat exact search, IVF
+with several <code>nprobe</code> settings, and HNSW with two <code>efSearch</code> values. It measures
+neighbor overlap against exact top-K, p50/p95 single-query latency, serial QPS,
+and serialized index bytes. Queries are the first 128 trained user vectors;
+these are a small reproducible benchmark, not a sampled production workload.</p>
+<h2 id="your-implementation-tasks">Your implementation tasks</h2>
+<ul>
+<li>[ ] Reimplement Flat indexing and confirm exact-neighbor agreement.</li>
+<li>[ ] Rebuild IVF and HNSW; explain what each parameter changes.</li>
+<li>[ ] Plot overlap against p95 latency; add held-out-target recall separately.</li>
+<li>[ ] Add seen/eligibility filtering and overfetch until K eligible candidates remain.</li>
+<li>[ ] Measure resident/build memory separately; serialized bytes are only storage size.</li>
+<li>[ ] Repeat at a larger catalog scale. Label duplicated/synthetic scale tests honestly.</li>
+<li>[ ] Add a persisted index manifest that carries the exported model hash and item-ID mapping.</li>
+<li>[ ] Reject an index/user-tower version mismatch in your serving function; test it.</li>
+</ul>
+<p>The reference verifies hashes of weights and the paired user/item export before
+building indexes. This catches accidental file mixing. It is not yet a serving
+API or an incremental index system. Production manifests also need the feature
+schema, catalog mapping, preprocessing version, index settings, and build time.</p>
+<p>The tiny MovieLens catalog may favor brute force. A slower ANN result here is
+useful evidence, not a benchmark failure. Normalization makes inner product and
+cosine ordering equivalent for this model.</p></article></main>
+  <noscript>This learning site needs JavaScript for the interactive diagrams. Read the full lessons at github.com/ericsheng495/ads-retrieval-from-scratch/tree/main/tutorials.</noscript>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

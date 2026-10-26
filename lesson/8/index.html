@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../../">
+<meta name="initial-route" content="/lesson/8">
+<meta name="content-url" content="assets/a136279ed9f0/content.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5ef">
+  <meta name="description" content="Learn recommendation and ranking from zero, then build ML retrieval. Beginner primers, interactive diagrams, all ten Snap ad-ranking references, and PyTorch exercises.">
+  <title>Production &amp; transfer — Retrieval Lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23285c48'/%3E%3Ctext x='11' y='30' fill='white' font-family='Georgia' font-size='32' font-style='italic'%3Er%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/a136279ed9f0/styles.css">
+  <script src="assets/a136279ed9f0/primers.js" defer></script>
+  <script src="assets/a136279ed9f0/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to lesson</a>
+  <div class="reading-progress" aria-hidden="true"><span id="reading-fill"></span></div>
+  <header class="mobile-header"><a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span> Retrieval Lab</a><button id="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button></header>
+  <aside id="sidebar" class="sidebar" aria-label="Course navigation">
+    <a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span><span>Retrieval Lab<small>A FIELD GUIDE TO CANDIDATE GENERATION</small></span></a>
+    <label class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find a concept…" aria-label="Search lessons and papers"><kbd>/</kbd></label>
+    <div id="search-results" aria-live="polite" hidden></div>
+    <nav>
+      <a class="nav-overview" href="#/">Overview <span>↗</span></a>
+      <p class="nav-label">START HERE · NO BACKGROUND NEEDED</p>
+      <a class="resource-link" href="#/foundations"><span>01</span> Recommenders from zero</a>
+      <a class="resource-link" href="#/ranking"><span>02</span> How ranking works</a>
+      <a class="resource-link" href="#/two-stage"><span>↳</span> How the stages fit together</a>
+      <a class="resource-link" href="#/models"><span>03</span> Snap’s ten references</a>
+      <a class="resource-link" href="#/glossary"><span>?</span> Plain-language glossary</a>
+      <p class="nav-label">THE LEARNING PATH</p>
+      <div id="lesson-nav"></div>
+      <p class="nav-label">YOUR WORKBENCH</p>
+      <a class="resource-link" href="#/start"><span>↳</span> Your first implementation</a>
+      <a class="resource-link" href="#/roadmap"><span>□</span> Eight-week roadmap</a>
+      <a class="resource-link" href="#/papers"><span>▤</span> Paper library</a>
+      <a class="resource-link" href="#/evaluation"><span>≋</span> Evaluation contract</a>
+    </nav>
+    <div class="course-progress"><div><span>Your progress</span><strong id="progress-label">0 / 9</strong></div><progress id="course-progress" value="0" max="9">0 of 9 lessons</progress><small>Saved on this browser.</small></div>
+    <a class="repo-link" href="https://github.com/ericsheng495/ads-retrieval-from-scratch" target="_blank" rel="noopener">Project repository <span>↗</span></a>
+  </aside>
+  <main id="main" tabindex="-1"><header class="reader-head"><h1>Production &amp; transfer</h1></header><article class="article"><h2 id="concept">Concept</h2>
+<p>Offline retrieval estimates performance on a chosen set of observed labels. Online
+behavior also depends on exposure, ranking, auctions, fresh inventory, and user
+response. A randomized experiment tests a change under those conditions, subject
+to its randomization and measurement assumptions.</p>
+<p>Transferring to another dataset tests a different boundary: whether the pipeline's
+data contract and model assumptions fit a new task. Reusing code does not require
+pretending query identity and evaluation are unchanged.</p>
+<h3 id="offline-improvement-is-a-product-hypothesis">Offline improvement is a product hypothesis</h3>
+<p>Logged data reflects an earlier policy. A new retriever changes candidates,
+downstream selections, and future feedback. A larger historical metric does
+not by itself establish the net effect of all these changes.</p>
+<p>In an A/B experiment, treatment is the changed policy and control is its
+comparison. Randomization helps make groups comparable, but interpretation
+depends on assumptions and uncertainty. Guardrails are metrics that must remain
+acceptable even when the primary metric improves, such as error rate or latency.</p>
+<p>Shared budgets or inventory can couple the groups. Read the
+<a href="two-sided/">two-sided design</a> and
+<a href="budget-split/">budget-split</a> lessons to see why choosing a traffic
+percentage is not the whole experimental design. Define the full-rollout effect
+you want before interpreting a mixed-market group difference as that effect.</p>
+<h2 id="worked-example">Worked example</h2>
+<p>Retriever B improves offline target recall from 0.25 to 0.28 but increases p95
+latency from 20 to 45 ms. More candidates survive, yet serving timeouts or weaker
+downstream outcomes could erase the benefit. Decide in advance which success
+metric and latency guardrail would support shipping.</p>
+<p>A conversion may arrive two days after its impression. An impression from an hour
+ago without a conversion is not necessarily a settled negative. Labels need an
+observation window and delayed joins keyed to the correct impression. Separately,
+features must reflect information available before the prediction, even if label
+construction uses later outcomes.</p>
+<p>For transfer, a new OTTO session has no trained user-ID row. Its prefix history
+must construct the query vector. A MovieLens ID-only implementation cannot run
+unchanged on that query without defining a fallback or adapting the encoder.</p>
+<h2 id="application-to-this-project">Application to this project</h2>
+<p>You will write an experiment plan rather than deploy to real traffic. Then use
+one transfer dataset to stress the design. OTTO provides an official data/evaluation
+repository; H&amp;M has a separate competition task. Internal candidate Recall@K and
+official competition scores must be labeled separately.</p>
+<h2 id="implement-it">Implement it</h2>
+<ol>
+<li>Write a one-page hypothesis with randomization unit, primary metric, guardrails,
+   power/duration logic, delayed-label window, and rollback criteria.</li>
+<li>Sketch event schemas: impression ID, user/session, item ID, event/prediction time,
+   model/index version, eligibility context, and eventual outcome.</li>
+<li>Specify a label join that avoids duplicated conversions and incomplete windows.</li>
+<li>Build a small OTTO or H&amp;M adapter with query histories, targets, catalog, and time cutoffs.</li>
+<li>Run popularity plus a suitable learned baseline; preserve dataset-specific split rules.</li>
+<li>Report at least two failure modes that differ from MovieLens and explain required adaptations.</li>
+</ol>
+<p>Read Schnabel for the logged-feedback problem and revisit the Snap post for
+the ML development cycle. Use <a href="https://github.com/otto-de/recsys-dataset">OTTO's official repository</a>
+for task definitions; consult <a href="https://www.kaggle.com/competitions/h-and-m-personalized-fashion-recommendations/overview/evaluation">H&amp;M's evaluation page</a>
+before reporting a competition score.</p>
+<h2 id="self-check">Self-check</h2>
+<ul>
+<li>Which assumption connects a logged offline metric to an online claim?</li>
+<li>What makes a label delayed rather than a feature leaked from the future?</li>
+<li>What would you measure before recommending this model to your future team?</li>
+</ul>
+<p>Finish with the <a href="roadmap/">Phase 9 design walkthrough</a>.</p></article></main>
+  <noscript>This learning site needs JavaScript for the interactive diagrams. Read the full lessons at github.com/ericsheng495/ads-retrieval-from-scratch/tree/main/tutorials.</noscript>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

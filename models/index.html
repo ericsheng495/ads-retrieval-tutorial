@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../">
+<meta name="initial-route" content="/models">
+<meta name="content-url" content="assets/a136279ed9f0/content.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5ef">
+  <meta name="description" content="Learn recommendation and ranking from zero, then build ML retrieval. Beginner primers, interactive diagrams, all ten Snap ad-ranking references, and PyTorch exercises.">
+  <title>Snap&#x27;s ranking references: a guided learning path — Retrieval Lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23285c48'/%3E%3Ctext x='11' y='30' fill='white' font-family='Georgia' font-size='32' font-style='italic'%3Er%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/a136279ed9f0/styles.css">
+  <script src="assets/a136279ed9f0/primers.js" defer></script>
+  <script src="assets/a136279ed9f0/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to lesson</a>
+  <div class="reading-progress" aria-hidden="true"><span id="reading-fill"></span></div>
+  <header class="mobile-header"><a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span> Retrieval Lab</a><button id="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button></header>
+  <aside id="sidebar" class="sidebar" aria-label="Course navigation">
+    <a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span><span>Retrieval Lab<small>A FIELD GUIDE TO CANDIDATE GENERATION</small></span></a>
+    <label class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find a concept…" aria-label="Search lessons and papers"><kbd>/</kbd></label>
+    <div id="search-results" aria-live="polite" hidden></div>
+    <nav>
+      <a class="nav-overview" href="#/">Overview <span>↗</span></a>
+      <p class="nav-label">START HERE · NO BACKGROUND NEEDED</p>
+      <a class="resource-link" href="#/foundations"><span>01</span> Recommenders from zero</a>
+      <a class="resource-link" href="#/ranking"><span>02</span> How ranking works</a>
+      <a class="resource-link" href="#/two-stage"><span>↳</span> How the stages fit together</a>
+      <a class="resource-link" href="#/models"><span>03</span> Snap’s ten references</a>
+      <a class="resource-link" href="#/glossary"><span>?</span> Plain-language glossary</a>
+      <p class="nav-label">THE LEARNING PATH</p>
+      <div id="lesson-nav"></div>
+      <p class="nav-label">YOUR WORKBENCH</p>
+      <a class="resource-link" href="#/start"><span>↳</span> Your first implementation</a>
+      <a class="resource-link" href="#/roadmap"><span>□</span> Eight-week roadmap</a>
+      <a class="resource-link" href="#/papers"><span>▤</span> Paper library</a>
+      <a class="resource-link" href="#/evaluation"><span>≋</span> Evaluation contract</a>
+    </nav>
+    <div class="course-progress"><div><span>Your progress</span><strong id="progress-label">0 / 9</strong></div><progress id="course-progress" value="0" max="9">0 of 9 lessons</progress><small>Saved on this browser.</small></div>
+    <a class="repo-link" href="https://github.com/ericsheng495/ads-retrieval-from-scratch" target="_blank" rel="noopener">Project repository <span>↗</span></a>
+  </aside>
+  <main id="main" tabindex="-1"><header class="reader-head"><h1>Snap&#x27;s ranking references: a guided learning path</h1></header><article class="article"><p>Start with <a href="foundations/">recommender foundations</a> and
+<a href="ranking/">how ranking works</a>. You do not need to read ten papers before
+building anything. These lessons introduce the missing concepts first.</p>
+<h2 id="where-the-references-fit">Where the references fit</h2>
+<p><a href="https://eng.snap.com/machine-learning-snap-ad-ranking">Snap's 2022 engineering post</a>
+connects candidate generation, heavy prediction models, auctions, and feedback.
+It also covers feature pipelines, training, continuous updates, experimentation,
+and monitoring. The references below support different parts of that story;
+being cited does not establish today's implementation of a particular Snap team.</p>
+<p>Eight references concern prediction/modeling; two concern experiment design.
+A better architecture and a trustworthy estimate of its business effect are
+separate requirements. None of these rankers must replace your two-tower retriever.</p>
+<table>
+<thead>
+<tr>
+<th>Read</th>
+<th>Lesson</th>
+<th>Main question</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><a href="facebook-clicks/">Facebook click prediction</a></td>
+<td>Can trees discover useful feature combinations for a linear click model?</td>
+</tr>
+<tr>
+<td>2</td>
+<td><a href="wide-deep/">Wide &amp; Deep</a></td>
+<td>How do we combine memorized crosses with learned generalization?</td>
+</tr>
+<tr>
+<td>3</td>
+<td><a href="dcn/">DCN</a></td>
+<td>Can a network construct explicit feature crosses?</td>
+</tr>
+<tr>
+<td>4</td>
+<td><a href="deepfm/">DeepFM</a></td>
+<td>How do shared embeddings model pair interactions and deeper patterns?</td>
+</tr>
+<tr>
+<td>5</td>
+<td><a href="xdeepfm/">xDeepFM</a></td>
+<td>How do vector-wise interactions complement a deep branch?</td>
+</tr>
+<tr>
+<td>6</td>
+<td><a href="mmoe/">MMoE</a></td>
+<td>Can each task choose a different mixture of shared experts?</td>
+</tr>
+<tr>
+<td>7</td>
+<td><a href="ple/">PLE</a></td>
+<td>What should stay task-specific and what should be shared?</td>
+</tr>
+<tr>
+<td>8</td>
+<td><a href="dcn-v2/">DCN V2</a></td>
+<td>How do richer cross layers trade expressiveness against cost?</td>
+</tr>
+<tr>
+<td>9</td>
+<td><a href="two-sided/">Two-sided experiment design</a></td>
+<td>Why can treatment change control through competition?</td>
+</tr>
+<tr>
+<td>10</td>
+<td><a href="budget-split/">Budget-split design</a></td>
+<td>How can resource isolation reduce budget-mediated interference?</td>
+</tr>
+</tbody>
+</table>
+<p>The table retains the post's reference order. For conceptual continuity, reading
+DCN V2 immediately after DCN also works. Begin with the
+<a href="snap-overview/">post companion</a> for a map of all its sections.</p>
+<h2 id="prerequisite-what-is-a-feature-interaction">Prerequisite: what is a feature interaction?</h2>
+<p>Let H=1 mean “recent hiking interest” and A=1 mean “hiking ad.” A linear score
+<code>b + wH*H + wA*A</code> gives the hiking-interest effect the same increment regardless
+of the ad. Adding <code>wHA*H*A</code> lets the <strong>combination</strong> receive an additional effect.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">H</th>
+<th style="text-align: right;">A</th>
+<th style="text-align: right;">H×A</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td>Neither signal</td>
+</tr>
+<tr>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td>Interest without a matching ad</td>
+</tr>
+<tr>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td>Hiking ad without observed interest</td>
+</tr>
+<tr>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td>Their combination is active</td>
+</tr>
+</tbody>
+</table>
+<p>For categorical values, manual crosses can explode in number: 1,000 interests
+times 10,000 ad categories produces 10 million possible pairs. Sparse observations
+make independent coefficients unreliable for rare combinations. Embeddings,
+factorization, neural branches, and cross layers offer different sharing rules.</p>
+<p>An <strong>explicit interaction</strong> appears through a designed product operation. An
+<strong>implicit interaction</strong> may be represented by a flexible nonlinear network
+without a separately named product feature. “Explicit” is about the computation;
+it does not automatically make a model causally interpretable.</p>
+<h2 id="prerequisite-multi-task-learning">Prerequisite: multi-task learning</h2>
+<p>Predicting clicks and purchases are two tasks. Separate models cannot share what
+they learn. A shared-bottom network shares an early representation, then uses a
+different prediction head per task. That can help scarce labels but can also
+cause <strong>negative transfer</strong>: optimizing one task worsens the other.</p>
+<p>MMoE and PLE change how representations are shared. Neither fixes mismatched
+label definitions, incomplete conversion windows, or sampling bias by itself.
+Always specify whether the conversion task is per impression or conditional on
+a click, and which examples are valid for each loss.</p>
+<h2 id="how-to-implement-without-turning-this-into-ten-projects">How to implement without turning this into ten projects</h2>
+<p>Build one tiny ranker harness: identical feature encoding, chronological split,
+batching, loss, metrics, and model interface. Swap one architecture at a time.
+For the first experiments use an explicitly synthetic feature-interaction task.
+For realistic CTR evaluation, use an appropriate impression dataset and its terms.
+MovieLens ratings do not constitute an ads CTR or conversion benchmark.</p>
+<p>For each paper, the lesson gives a <strong>minimal exercise</strong>, not a claim that the
+entire paper has been reproduced in <code>src/</code>. Record log loss, AUC where defined,
+calibration, serving cost, and task slices before making architecture claims.</p></article></main>
+  <noscript>This learning site needs JavaScript for the interactive diagrams. Read the full lessons at github.com/ericsheng495/ads-retrieval-from-scratch/tree/main/tutorials.</noscript>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../">
+<meta name="initial-route" content="/wide-deep">
+<meta name="content-url" content="assets/a136279ed9f0/content.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5ef">
+  <meta name="description" content="Learn recommendation and ranking from zero, then build ML retrieval. Beginner primers, interactive diagrams, all ten Snap ad-ranking references, and PyTorch exercises.">
+  <title>Wide &amp; Deep: combine memorization and generalization — Retrieval Lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23285c48'/%3E%3Ctext x='11' y='30' fill='white' font-family='Georgia' font-size='32' font-style='italic'%3Er%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/a136279ed9f0/styles.css">
+  <script src="assets/a136279ed9f0/primers.js" defer></script>
+  <script src="assets/a136279ed9f0/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to lesson</a>
+  <div class="reading-progress" aria-hidden="true"><span id="reading-fill"></span></div>
+  <header class="mobile-header"><a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span> Retrieval Lab</a><button id="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button></header>
+  <aside id="sidebar" class="sidebar" aria-label="Course navigation">
+    <a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span><span>Retrieval Lab<small>A FIELD GUIDE TO CANDIDATE GENERATION</small></span></a>
+    <label class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find a concept…" aria-label="Search lessons and papers"><kbd>/</kbd></label>
+    <div id="search-results" aria-live="polite" hidden></div>
+    <nav>
+      <a class="nav-overview" href="#/">Overview <span>↗</span></a>
+      <p class="nav-label">START HERE · NO BACKGROUND NEEDED</p>
+      <a class="resource-link" href="#/foundations"><span>01</span> Recommenders from zero</a>
+      <a class="resource-link" href="#/ranking"><span>02</span> How ranking works</a>
+      <a class="resource-link" href="#/two-stage"><span>↳</span> How the stages fit together</a>
+      <a class="resource-link" href="#/models"><span>03</span> Snap’s ten references</a>
+      <a class="resource-link" href="#/glossary"><span>?</span> Plain-language glossary</a>
+      <p class="nav-label">THE LEARNING PATH</p>
+      <div id="lesson-nav"></div>
+      <p class="nav-label">YOUR WORKBENCH</p>
+      <a class="resource-link" href="#/start"><span>↳</span> Your first implementation</a>
+      <a class="resource-link" href="#/roadmap"><span>□</span> Eight-week roadmap</a>
+      <a class="resource-link" href="#/papers"><span>▤</span> Paper library</a>
+      <a class="resource-link" href="#/evaluation"><span>≋</span> Evaluation contract</a>
+    </nav>
+    <div class="course-progress"><div><span>Your progress</span><strong id="progress-label">0 / 9</strong></div><progress id="course-progress" value="0" max="9">0 of 9 lessons</progress><small>Saved on this browser.</small></div>
+    <a class="repo-link" href="https://github.com/ericsheng495/ads-retrieval-from-scratch" target="_blank" rel="noopener">Project repository <span>↗</span></a>
+  </aside>
+  <main id="main" tabindex="-1"><header class="reader-head"><h1>Wide &amp; Deep: combine memorization and generalization</h1></header><article class="article"><h2 id="concept">Concept</h2>
+<p><strong>Memorization</strong> means retaining the effect of a useful observed combination.
+<strong>Generalization</strong> means making useful predictions for combinations with little
+direct evidence. Neither word means “always good” or “always overfitting.”</p>
+<p>Wide &amp; Deep jointly trains a wide linear branch, which can include engineered
+cross features, and a deep branch using embeddings and nonlinear layers. Their
+contributions combine into the final prediction. The wide branch can retain
+specific patterns while the deep branch shares statistical strength.
+<a href="https://arxiv.org/abs/1606.07792">Cheng et al., 2016</a>.</p>
+<h2 id="architecture">Architecture</h2>
+<div class="architecture-slot" data-diagram="wide-deep"></div>
+
+<p>The branches contribute to one logit before the sigmoid. Training them jointly
+does not mean averaging two separately calibrated probabilities.</p>
+<h2 id="worked-example">Worked example</h2>
+<p>For Mira and the hiking ad, the cross <code>hiking_interest AND hiking_category</code> is 1.
+Suppose its wide coefficient contributes +0.7. The deep branch uses category,
+history, and numeric inputs and outputs +0.4. Add bias -2:</p>
+<pre><code class="language-text">z = -2 + 0.7 + 0.4 = -0.9
+p = sigmoid(-0.9) ≈ 0.289
+</code></pre>
+<p>For a new outdoor subcategory, the exact cross may have no reliable coefficient,
+while embeddings can share patterns with related examples. That possibility is
+why a generalizing branch is useful; it is not a guarantee of cold-start quality.
+An unseen category still needs a defined encoding or content path.</p>
+<h2 id="implementation-exercise">Implementation exercise</h2>
+<p>On a fixed toy interaction dataset, implement three variants: wide-only,
+deep-only, and the summed-logit joint model. Use the same training/validation
+split and loss. Start with one manually named cross so you can trace its effect.
+Then remove that cross and observe what the deep branch can learn by itself.</p>
+<p>Measure log loss and calibration as well as AUC. Control embedding size and
+training budget; otherwise a larger model can appear better simply through more
+capacity. This is an architecture exercise, not a new feature of <code>src/train.py</code>.</p>
+<h2 id="check-your-understanding">Check your understanding</h2>
+<p>What useful information can a hand-engineered cross add beyond the separate
+feature indicators? Why might adding millions of crosses make training harder?</p>
+<p>Next: <a href="dcn/">DCN</a>.</p></article></main>
+  <noscript>This learning site needs JavaScript for the interactive diagrams. Read the full lessons at github.com/ericsheng495/ads-retrieval-from-scratch/tree/main/tutorials.</noscript>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

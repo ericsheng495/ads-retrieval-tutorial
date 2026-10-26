@@ -10,12 +10,20 @@ let toastTimer;
 function toast(message) { $('#toast').textContent = message; $('#toast').classList.add('visible'); clearTimeout(toastTimer); toastTimer = setTimeout(() => $('#toast').classList.remove('visible'), 2500); }
 const footer = () => `<footer class="site-footer"><span>Retrieval Lab · Learn it. See it. Build it.</span><span>Independent learning project · Public research, practical experiments.</span></footer>`;
 function topbar(label) { return `<div class="topline"><div class="trail"><a href="#/">Retrieval Lab</a><span>/</span>${esc(label)}</div><span class="quiet">A field guide, from first principles to working code</span></div>`; }
+function normalizeNavigation(root=document) {
+  $$('a[href^="#/"]',root).forEach(a=>{
+    const path=a.getAttribute('href').slice(2);
+    a.dataset.route=`/${path}`;
+    a.href=new URL(path?`${path}/`:'./',document.baseURI).href;
+  });
+}
 function syncNav() {
   $('#lesson-nav').innerHTML = course.lessons.map(l => `<a class="lesson-link ${state.done.includes(l.id) ? 'done' : ''} ${route === `/lesson/${l.id}` ? 'active' : ''}" href="#/lesson/${l.id}" ${route === `/lesson/${l.id}` ? 'aria-current="page"' : ''}><span class="number">${state.done.includes(l.id) ? '✓' : String(l.id).padStart(2, '0')}</span>${esc(l.title)}</a>`).join('');
-  $$('.resource-link,.nav-overview').forEach(a => { const active = a.getAttribute('href') === `#${route}`; a.classList.toggle('active', active); if(active) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current'); });
+  $$('.resource-link,.nav-overview').forEach(a => { const active = a.dataset.route === route || a.getAttribute('href') === `#${route}`; a.classList.toggle('active', active); if(active) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current'); });
   $('#progress-label').textContent = `${state.done.length} / 9`;
   $('#course-progress').value = state.done.length;
   $('#course-progress').textContent = `${state.done.length} of 9 lessons`;
+  normalizeNavigation();
 }
 function svg(body, viewBox = '0 0 660 240', label = 'Interactive retrieval diagram') { return `<svg class="diagram" viewBox="${viewBox}" role="img" aria-label="${esc(label)}"><defs><marker id="arrow" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="#8da28f"/></marker><marker id="query-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="#b64f30"/></marker></defs>${body}</svg>`; }
 function box(x,y,w,h,label,kind='node',sub='') {return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="7" class="${kind}"/><text x="${x+w/2}" y="${y+h/2+(sub?-1:4)}" text-anchor="middle">${esc(label)}</text>${sub?`<text class="dim" x="${x+w/2}" y="${y+h/2+16}" text-anchor="middle">${esc(sub)}</text>`:''}`;}
@@ -91,7 +99,7 @@ const pageNames={roadmap:'The eight-week roadmap',start:'Your first implementati
 function referencePage(name) {
   const page=course.pages[name];if(!page)return notFound();
   const title=pageNames[name]||page.title;
-  const basic=['foundations','ranking','glossary'].includes(name);
+  const basic=['foundations','ranking','two-stage','glossary'].includes(name);
   const model=['models','snap-overview','facebook-clicks','wide-deep','dcn','deepfm','xdeepfm','mmoe','ple','dcn-v2','two-sided','budget-split'].includes(name);
   const label=basic?'Start from the beginning':model?'Snap reference learning path':'Your workbench';
   const intro=basic?'Plain-language explanations, one running example, and the math behind the decisions.':model?'Concept first. Follow the information flow, work through the example, then build the smallest useful version.':'Turn understanding into a reproducible project. Checklists save automatically on this browser.';
@@ -102,10 +110,11 @@ function papers(filter='all') {
   const filtered=course.papers.filter(p=>filter==='all'||p.category===filter||(filter==='snap'&&p.group==='snap')||p.phases.includes(Number(filter)));
   $('#main').innerHTML=`${topbar('Paper library')}<header class="reader-head"><span class="eyebrow">READ FOR A DECISION, NOT FOR A TITLE</span><h1>Ideas worth building on.</h1><p class="intro">${course.papers.length} research references, including every reference from the Snap post. Start with the question you’re trying to answer; read the method and evaluation when you need them.</p></header><div class="note"><strong>Start with the real-world context.</strong><br><a href="https://eng.snap.com/machine-learning-snap-ad-ranking" target="_blank" rel="noopener">Snap’s Machine Learning for Snapchat Ad Ranking ↗</a> introduces the public funnel. It does not establish the current architecture of any specific team.</div><div class="paper-filters" aria-label="Filter papers by topic">${[['all','All papers'],['snap','Snap’s 10 references'],['ranking','Ranking models'],['experimentation','Marketplace tests'],['1','Foundations'],['2','Evaluation'],['3','ANN search'],['4','Training'],['5','Features'],['6','Ads & cold start'],['7','Production']].map(([value,label])=>`<button data-filter="${value}" class="${filter===value?'selected':''}" aria-pressed="${filter===value}">${label}</button>`).join('')}</div><div class="paper-counter" role="status">${filtered.length} references</div><section id="paper-list">${filtered.map(p=>`<article class="paper-entry"><span class="paper-meta">${p.year} / ${esc(p.venue)}</span><h2>${esc(p.title)}</h2><p>${esc(p.authors.replaceAll(' and ', ', '))}</p><div class="paper-links"><a href="${esc(p.url)}" target="_blank" rel="noopener">Publication ↗</a>${p.pdf?`<a href="${esc(p.pdf)}" target="_blank" rel="noopener">Read PDF ↗</a>`:''}${p.lesson?`<a href="#/${esc(p.lesson)}">Study the concept →</a>`:''}<span>Phase ${p.phases.join(' · ')}</span></div></article>`).join('')}</section><details class="check-question"><summary>How should I read and take notes?</summary><article class="article">${course.pages.papers.html}</article></details>${footer()}`;
   $$('[data-filter]').forEach(button=>button.addEventListener('click',()=>papers(button.dataset.filter)));
+  normalizeNavigation($('#main'));
 }
 function notFound() {$('#main').innerHTML=`${topbar('Page not found')}<h1>This path doesn’t exist yet.</h1><a class="button primary" href="#/">Return to the learning path →</a>`;}
 function navigate() {
-  route=location.hash.slice(1).split('?')[0]||'/';
+  route=location.hash.startsWith('#/')?location.hash.slice(1).split('?')[0]:($('meta[name="initial-route"]')?.content||'/');
   if(route==='/')home();else if(/^\/lesson\/\d+$/.test(route))lesson(Number(route.split('/')[2]));else if(route==='/papers')papers();else referencePage(route.slice(1));
   syncNav();$('#sidebar').classList.remove('open');$('#menu-toggle').setAttribute('aria-expanded','false');
   document.title=route.startsWith('/lesson/')?`${course.lessons[Number(route.split('/')[2])]?.title||'Lesson'} — Retrieval Lab`:'Retrieval Lab — Learn it. See it. Build it.';
@@ -115,6 +124,7 @@ function search(query) {
   const out=$('#search-results');query=query.trim().toLowerCase();out.hidden=!query;if(!query)return;
   const matches=[...course.lessons.filter(l=>`${l.title} ${l.html.replace(/<[^>]+>/g,' ')}`.toLowerCase().includes(query)).map(l=>({title:l.title,href:`#/lesson/${l.id}`,type:`Lesson ${String(l.id).padStart(2,'0')}`})),...Object.entries(course.pages).filter(([key,p])=>`${p.title} ${p.html.replace(/<[^>]+>/g,' ')}`.toLowerCase().includes(query)).map(([key,p])=>({title:p.title,href:`#/${key}`,type:'Concept guide'})),...course.papers.filter(p=>`${p.title} ${p.authors}`.toLowerCase().includes(query)).map(p=>({title:p.title,href:p.url,type:`Paper · ${p.year}`}))].slice(0,12);
   out.innerHTML=matches.length?matches.map(m=>`<a class="search-hit" href="${esc(m.href)}" ${m.href.startsWith('http')?'target="_blank" rel="noopener"':''}><small>${m.type}</small>${esc(m.title)}</a>`).join(''):'<p class="search-empty">No matching lessons or papers. Try “temperature” or “cold start”.</p>';
+  normalizeNavigation(out);
 }
 
 /* The labs use actual computations over small, explicitly illustrative examples. */
@@ -202,4 +212,4 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape'){$('#sidebar
 $('#search').addEventListener('input',event=>{if(course)search(event.target.value);});
 window.addEventListener('scroll',()=>{const max=document.documentElement.scrollHeight-innerHeight;$('#reading-fill').style.width=`${max>0?Math.min(100,scrollY/max*100):0}%`;},{passive:true});
 window.addEventListener('hashchange',()=>{if(course)navigate();});
-fetch('content.json').then(response=>{if(!response.ok)throw new Error('Content request failed');return response.json();}).then(data=>{course=data;navigate();}).catch(()=>{$('#main').innerHTML='<h1>The lessons couldn’t load.</h1><p>Refresh to try again, or read the <a href="https://github.com/ericsheng495/ads-retrieval-from-scratch/tree/main/tutorials">Markdown lessons in the project repository</a>.</p>';});
+fetch($('meta[name="content-url"]')?.content||'content.json').then(response=>{if(!response.ok)throw new Error('Content request failed');return response.json();}).then(data=>{course=data;navigate();}).catch(()=>{if(!$('#main .article'))$('#main').innerHTML='<h1>The lessons couldn’t load.</h1><p>Refresh to try again, or read the <a href="https://github.com/ericsheng495/ads-retrieval-from-scratch/tree/main/tutorials">Markdown lessons in the project repository</a>.</p>';else toast('Interactive examples could not load. The lesson text is still available.');});

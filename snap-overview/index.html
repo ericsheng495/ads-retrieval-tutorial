@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../">
+<meta name="initial-route" content="/snap-overview">
+<meta name="content-url" content="assets/a136279ed9f0/content.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5ef">
+  <meta name="description" content="Learn recommendation and ranking from zero, then build ML retrieval. Beginner primers, interactive diagrams, all ten Snap ad-ranking references, and PyTorch exercises.">
+  <title>Read the Snap ad-ranking post with a system map — Retrieval Lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23285c48'/%3E%3Ctext x='11' y='30' fill='white' font-family='Georgia' font-size='32' font-style='italic'%3Er%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/a136279ed9f0/styles.css">
+  <script src="assets/a136279ed9f0/primers.js" defer></script>
+  <script src="assets/a136279ed9f0/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to lesson</a>
+  <div class="reading-progress" aria-hidden="true"><span id="reading-fill"></span></div>
+  <header class="mobile-header"><a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span> Retrieval Lab</a><button id="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button></header>
+  <aside id="sidebar" class="sidebar" aria-label="Course navigation">
+    <a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span><span>Retrieval Lab<small>A FIELD GUIDE TO CANDIDATE GENERATION</small></span></a>
+    <label class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find a concept…" aria-label="Search lessons and papers"><kbd>/</kbd></label>
+    <div id="search-results" aria-live="polite" hidden></div>
+    <nav>
+      <a class="nav-overview" href="#/">Overview <span>↗</span></a>
+      <p class="nav-label">START HERE · NO BACKGROUND NEEDED</p>
+      <a class="resource-link" href="#/foundations"><span>01</span> Recommenders from zero</a>
+      <a class="resource-link" href="#/ranking"><span>02</span> How ranking works</a>
+      <a class="resource-link" href="#/two-stage"><span>↳</span> How the stages fit together</a>
+      <a class="resource-link" href="#/models"><span>03</span> Snap’s ten references</a>
+      <a class="resource-link" href="#/glossary"><span>?</span> Plain-language glossary</a>
+      <p class="nav-label">THE LEARNING PATH</p>
+      <div id="lesson-nav"></div>
+      <p class="nav-label">YOUR WORKBENCH</p>
+      <a class="resource-link" href="#/start"><span>↳</span> Your first implementation</a>
+      <a class="resource-link" href="#/roadmap"><span>□</span> Eight-week roadmap</a>
+      <a class="resource-link" href="#/papers"><span>▤</span> Paper library</a>
+      <a class="resource-link" href="#/evaluation"><span>≋</span> Evaluation contract</a>
+    </nav>
+    <div class="course-progress"><div><span>Your progress</span><strong id="progress-label">0 / 9</strong></div><progress id="course-progress" value="0" max="9">0 of 9 lessons</progress><small>Saved on this browser.</small></div>
+    <a class="repo-link" href="https://github.com/ericsheng495/ads-retrieval-from-scratch" target="_blank" rel="noopener">Project repository <span>↗</span></a>
+  </aside>
+  <main id="main" tabindex="-1"><header class="reader-head"><h1>Read the Snap ad-ranking post with a system map</h1></header><article class="article"><p>Read <a href="https://eng.snap.com/machine-learning-snap-ad-ranking">the original post</a>
+alongside this companion. The post is dated February 11, 2022. This page teaches
+the concepts and maps all its sections and ten references to your exercises;
+it does not reproduce the article or assert a current internal architecture.</p>
+<h2 id="what-the-post-covers">What the post covers</h2>
+<p>The published funnel is eligibility → candidate generation → heavy models →
+auction, followed by feedback. The engineering discussion includes scale/cost,
+auction selection bias, calibration, changing behavior and delayed outcomes;
+feature pipelines; distributed training; continuous model updates; budget-split
+experiments; and feature/score monitoring. Its cited architectures address
+feature interactions and multi-task learning. Its last two references concern
+marketplace experiment design.</p>
+<h2 id="map-the-sections-to-something-you-can-build">Map the sections to something you can build</h2>
+<table>
+<thead>
+<tr>
+<th>Article area</th>
+<th>Concept to understand</th>
+<th>Your learning exercise</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>System overview</td>
+<td>Different stages spend different amounts of work</td>
+<td>Trace one request through the <a href="foundations/">foundations</a> diagram.</td>
+</tr>
+<tr>
+<td>Ads-specific modeling problems</td>
+<td>Labels and serving distributions can differ</td>
+<td>Separate shown, unshown, clicked, and conversion-pending rows.</td>
+</tr>
+<tr>
+<td>Features and signals</td>
+<td>Inputs need definitions and query-time availability</td>
+<td>Write an event-time feature schema and a leakage check.</td>
+</tr>
+<tr>
+<td>Model development</td>
+<td>An architecture is one part of a controlled experiment</td>
+<td>Compare one branch change on a fixed dataset/split.</td>
+</tr>
+<tr>
+<td>Distributed training</td>
+<td>Replicas aggregate learning from separate data batches</td>
+<td>Explain gradient sharing versus independently trained models.</td>
+</tr>
+<tr>
+<td>Continuous updates</td>
+<td>Model state changes as new feedback arrives</td>
+<td>Save immutable model/data/feature versions for every checkpoint.</td>
+</tr>
+<tr>
+<td>Online testing</td>
+<td>Randomization can coexist with shared-resource interference</td>
+<td>Compare a shared and isolated budget ledger.</td>
+</tr>
+<tr>
+<td>Monitoring</td>
+<td>Correct code can still receive broken or drifting inputs</td>
+<td>Track missingness, score quantiles, latency, and delivery slices.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="understand-calibration-before-the-auction">Understand calibration before the auction</h2>
+<p>Suppose one candidate has estimated per-impression conversion probability 0.02
+and toy value 3; another has 0.01 and toy value 5. Expected toy values are 0.06
+and 0.05. Doubling one group's probability estimates can change a decision even
+when its within-group ordering remains unchanged. This invented calculation
+explains why score scale can matter; it is not an auction specification.</p>
+<p>For a practical check, bucket predictions and compare average probability with
+observed frequency using mature labels. Slice by meaningful populations and
+exposure definitions. A good overall number can hide a broken minority slice.</p>
+<h2 id="understand-selection-and-delayed-feedback">Understand selection and delayed feedback</h2>
+<p>Sketch a dataset with request ID, candidate IDs, displayed ID, prediction-time
+features, click time, and conversion time. Only displayed candidates can create
+display outcomes. A nonwinner's missing click is not an observed rejection.
+An immature conversion window should not silently become a settled negative.</p>
+<p>These are two different issues: the earlier policy selected what was observed;
+delayed feedback determines when an observed outcome is complete. Sampling
+correction inside a retrieval loss does not resolve both problems.</p>
+<h2 id="trace-the-model-lifecycle">Trace the model lifecycle</h2>
+<p>For your project, use the sequence: define labels and splits → build feature
+inputs → train → validate prediction and serving cost → register a checkpoint
+and its dependencies → stage a compatible serving deployment → experiment →
+monitor → update or roll back. This is a suggested learning workflow.</p>
+<p>Write down what should happen if a genre feature is missing for 90% of new items,
+an index uses an old model, or conversion labels stop arriving. The correct
+response may require halting an update or using a fallback rather than increasing
+model complexity. Define the alarm and rollback evidence before simulating the fault.</p>
+<h2 id="read-every-reference-in-context">Read every reference in context</h2>
+<p>The <a href="models/">complete ten-paper learning path</a> includes individual explanations,
+schematic diagrams, worked arithmetic, and implementation exercises for every
+reference in the post. The <a href="papers/">paper library</a> includes
+citations and primary links. None of the ranking architectures is already
+implemented by the MovieLens two-tower trainer; these are guided extensions.</p></article></main>
+  <noscript>This learning site needs JavaScript for the interactive diagrams. Read the full lessons at github.com/ericsheng495/ads-retrieval-from-scratch/tree/main/tutorials.</noscript>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../">
+<meta name="initial-route" content="/glossary">
+<meta name="content-url" content="assets/a136279ed9f0/content.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5ef">
+  <meta name="description" content="Learn recommendation and ranking from zero, then build ML retrieval. Beginner primers, interactive diagrams, all ten Snap ad-ranking references, and PyTorch exercises.">
+  <title>A plain-language recommender glossary — Retrieval Lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23285c48'/%3E%3Ctext x='11' y='30' fill='white' font-family='Georgia' font-size='32' font-style='italic'%3Er%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/a136279ed9f0/styles.css">
+  <script src="assets/a136279ed9f0/primers.js" defer></script>
+  <script src="assets/a136279ed9f0/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to lesson</a>
+  <div class="reading-progress" aria-hidden="true"><span id="reading-fill"></span></div>
+  <header class="mobile-header"><a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span> Retrieval Lab</a><button id="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button></header>
+  <aside id="sidebar" class="sidebar" aria-label="Course navigation">
+    <a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span><span>Retrieval Lab<small>A FIELD GUIDE TO CANDIDATE GENERATION</small></span></a>
+    <label class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find a concept…" aria-label="Search lessons and papers"><kbd>/</kbd></label>
+    <div id="search-results" aria-live="polite" hidden></div>
+    <nav>
+      <a class="nav-overview" href="#/">Overview <span>↗</span></a>
+      <p class="nav-label">START HERE · NO BACKGROUND NEEDED</p>
+      <a class="resource-link" href="#/foundations"><span>01</span> Recommenders from zero</a>
+      <a class="resource-link" href="#/ranking"><span>02</span> How ranking works</a>
+      <a class="resource-link" href="#/two-stage"><span>↳</span> How the stages fit together</a>
+      <a class="resource-link" href="#/models"><span>03</span> Snap’s ten references</a>
+      <a class="resource-link" href="#/glossary"><span>?</span> Plain-language glossary</a>
+      <p class="nav-label">THE LEARNING PATH</p>
+      <div id="lesson-nav"></div>
+      <p class="nav-label">YOUR WORKBENCH</p>
+      <a class="resource-link" href="#/start"><span>↳</span> Your first implementation</a>
+      <a class="resource-link" href="#/roadmap"><span>□</span> Eight-week roadmap</a>
+      <a class="resource-link" href="#/papers"><span>▤</span> Paper library</a>
+      <a class="resource-link" href="#/evaluation"><span>≋</span> Evaluation contract</a>
+    </nav>
+    <div class="course-progress"><div><span>Your progress</span><strong id="progress-label">0 / 9</strong></div><progress id="course-progress" value="0" max="9">0 of 9 lessons</progress><small>Saved on this browser.</small></div>
+    <a class="repo-link" href="https://github.com/ericsheng495/ads-retrieval-from-scratch" target="_blank" rel="noopener">Project repository <span>↗</span></a>
+  </aside>
+  <main id="main" tabindex="-1"><header class="reader-head"><h1>A plain-language recommender glossary</h1></header><article class="article"><table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning</th>
+<th>Example or caveat</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>User / query</td>
+<td>The person or request being served</td>
+<td>A session prefix can be the query without a known user ID.</td>
+</tr>
+<tr>
+<td>Item / candidate</td>
+<td>Something the system could show</td>
+<td>A candidate is an item in a particular shortlist.</td>
+</tr>
+<tr>
+<td>Catalog</td>
+<td>The collection of possible items</td>
+<td>Available inventory can change over time.</td>
+</tr>
+<tr>
+<td>Context</td>
+<td>Information about the current situation</td>
+<td>Device, time, surface, recent history.</td>
+</tr>
+<tr>
+<td>Feature</td>
+<td>An input available at prediction time</td>
+<td>Earlier interaction count; never the future outcome.</td>
+</tr>
+<tr>
+<td>Label</td>
+<td>The target derived from an observed outcome</td>
+<td>Clicked or did not click under a stated exposure/window.</td>
+</tr>
+<tr>
+<td>Impression</td>
+<td>A logged display opportunity</td>
+<td>Its precise meaning depends on instrumentation.</td>
+</tr>
+<tr>
+<td>CTR</td>
+<td>Click-through rate: clicks / impressions</td>
+<td>A model may predict a per-impression click probability.</td>
+</tr>
+<tr>
+<td>CVR</td>
+<td>Conversion rate under a stated denominator</td>
+<td>Per click and per impression are different quantities.</td>
+</tr>
+<tr>
+<td>Eligibility</td>
+<td>Whether an item is allowed to be shown</td>
+<td>Budgets, targeting, policy, or inventory constraints.</td>
+</tr>
+<tr>
+<td>Retrieval</td>
+<td>Finding a shortlist cheaply</td>
+<td>Search vectors or combine several candidate sources.</td>
+</tr>
+<tr>
+<td>Ranking</td>
+<td>Scoring or ordering candidates</td>
+<td>Often uses a richer model than retrieval.</td>
+</tr>
+<tr>
+<td>Re-ranking</td>
+<td>Adjusting an initial ordering</td>
+<td>Diversity, fatigue, or other product constraints.</td>
+</tr>
+<tr>
+<td>Score</td>
+<td>A number used to compare candidates</td>
+<td>A similarity score need not be a probability.</td>
+</tr>
+<tr>
+<td>Embedding</td>
+<td>A learned numerical representation</td>
+<td>An array of d numbers associated with an entity or features.</td>
+</tr>
+<tr>
+<td>Tower / encoder</td>
+<td>A function that produces a representation</td>
+<td>Independent item computation enables cached item vectors.</td>
+</tr>
+<tr>
+<td>Parameter</td>
+<td>A number learned during training</td>
+<td>A coefficient, bias, or embedding coordinate.</td>
+</tr>
+<tr>
+<td>Hyperparameter</td>
+<td>A setting chosen outside the optimizer</td>
+<td>Learning rate, dimension, number of layers.</td>
+</tr>
+<tr>
+<td>Logit</td>
+<td>Raw score before a sigmoid or softmax</td>
+<td>It can be negative or larger than one.</td>
+</tr>
+<tr>
+<td>Sigmoid</td>
+<td>A function mapping a logit into (0,1)</td>
+<td>Produces a binary-event probability parameter.</td>
+</tr>
+<tr>
+<td>Softmax</td>
+<td>A function turning candidate logits into a distribution</td>
+<td>Candidate probabilities sum to one within that set.</td>
+</tr>
+<tr>
+<td>Loss</td>
+<td>A quantity measuring training disagreement</td>
+<td>Reducing it does not guarantee online improvement.</td>
+</tr>
+<tr>
+<td>Gradient</td>
+<td>How a small parameter change affects the loss</td>
+<td>The optimizer uses it to choose an update direction.</td>
+</tr>
+<tr>
+<td>Batch</td>
+<td>A group of examples processed together</td>
+<td>Other batch items can provide retrieval alternatives.</td>
+</tr>
+<tr>
+<td>Epoch</td>
+<td>One pass through the training examples</td>
+<td>More passes can overfit.</td>
+</tr>
+<tr>
+<td>Negative</td>
+<td>A contrasting or nonpositive example</td>
+<td>An unobserved item is not necessarily disliked.</td>
+</tr>
+<tr>
+<td>Feature interaction / cross</td>
+<td>A joint effect beyond individual feature effects</td>
+<td>Topic interest together with matching ad category.</td>
+</tr>
+<tr>
+<td>Sparse feature</td>
+<td>A representation with mostly zero entries</td>
+<td>A one-hot category has one active position.</td>
+</tr>
+<tr>
+<td>Dense feature</td>
+<td>A representation with many usable numerical entries</td>
+<td>A learned embedding or normalized numeric measurements.</td>
+</tr>
+<tr>
+<td>MLP / DNN</td>
+<td>A stack of learned layers and nonlinear transformations</td>
+<td>A flexible function from features to scores or vectors.</td>
+</tr>
+<tr>
+<td>Multi-task learning</td>
+<td>Learning several predictions in one system</td>
+<td>Click and purchase tasks may share some representations.</td>
+</tr>
+<tr>
+<td>Expert / gate</td>
+<td>A learned subnetwork / a learned mixing function</td>
+<td>A gate weights expert outputs for an input.</td>
+</tr>
+<tr>
+<td>Offline evaluation</td>
+<td>Testing on a fixed logged dataset</td>
+<td>Its candidate and label assumptions matter.</td>
+</tr>
+<tr>
+<td>Online experiment</td>
+<td>Comparing actual outcomes under deployed policies</td>
+<td>Interference may couple treatment and control.</td>
+</tr>
+<tr>
+<td>Calibration</td>
+<td>Agreement between predicted probabilities and frequencies</td>
+<td>Correct ordering alone does not establish calibration.</td>
+</tr>
+<tr>
+<td>Leakage</td>
+<td>Inputs contain information unavailable at prediction time</td>
+<td>A future conversion accidentally enters a feature.</td>
+</tr>
+<tr>
+<td>Selection bias</td>
+<td>Observations reflect an earlier selection process</td>
+<td>Only auction winners can produce displayed-ad feedback.</td>
+</tr>
+<tr>
+<td>Interference</td>
+<td>One experimental unit's treatment affects another's outcome</td>
+<td>Treatment spends a budget shared with control.</td>
+</tr>
+<tr>
+<td>ANN</td>
+<td>Approximate nearest-neighbor search</td>
+<td>Trades exact search work for possible missed neighbors.</td>
+</tr>
+<tr>
+<td>Cold start</td>
+<td>Making predictions with little or no past interaction data</td>
+<td>A new ad needs a content/fallback path.</td>
+</tr>
+<tr>
+<td>p95 latency</td>
+<td>A time at or below which 95% of measured requests finish</td>
+<td>State workload, batching, and hardware.</td>
+</tr>
+<tr>
+<td>Ablation</td>
+<td>Removing or changing one component for comparison</td>
+<td>Compare a deep branch with and without a cross branch.</td>
+</tr>
+</tbody>
+</table>
+<p>Return to <a href="foundations/">foundations</a>, <a href="ranking/">ranking</a>, or
+<a href="models/">the architecture reading path</a>.</p></article></main>
+  <noscript>This learning site needs JavaScript for the interactive diagrams. Read the full lessons at github.com/ericsheng495/ads-retrieval-from-scratch/tree/main/tutorials.</noscript>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

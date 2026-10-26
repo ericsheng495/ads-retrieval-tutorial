@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../../">
+<meta name="initial-route" content="/lesson/5">
+<meta name="content-url" content="assets/a136279ed9f0/content.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5ef">
+  <meta name="description" content="Learn recommendation and ranking from zero, then build ML retrieval. Beginner primers, interactive diagrams, all ten Snap ad-ranking references, and PyTorch exercises.">
+  <title>Better negative sampling — Retrieval Lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23285c48'/%3E%3Ctext x='11' y='30' fill='white' font-family='Georgia' font-size='32' font-style='italic'%3Er%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/a136279ed9f0/styles.css">
+  <script src="assets/a136279ed9f0/primers.js" defer></script>
+  <script src="assets/a136279ed9f0/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to lesson</a>
+  <div class="reading-progress" aria-hidden="true"><span id="reading-fill"></span></div>
+  <header class="mobile-header"><a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span> Retrieval Lab</a><button id="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button></header>
+  <aside id="sidebar" class="sidebar" aria-label="Course navigation">
+    <a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span><span>Retrieval Lab<small>A FIELD GUIDE TO CANDIDATE GENERATION</small></span></a>
+    <label class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find a concept…" aria-label="Search lessons and papers"><kbd>/</kbd></label>
+    <div id="search-results" aria-live="polite" hidden></div>
+    <nav>
+      <a class="nav-overview" href="#/">Overview <span>↗</span></a>
+      <p class="nav-label">START HERE · NO BACKGROUND NEEDED</p>
+      <a class="resource-link" href="#/foundations"><span>01</span> Recommenders from zero</a>
+      <a class="resource-link" href="#/ranking"><span>02</span> How ranking works</a>
+      <a class="resource-link" href="#/two-stage"><span>↳</span> How the stages fit together</a>
+      <a class="resource-link" href="#/models"><span>03</span> Snap’s ten references</a>
+      <a class="resource-link" href="#/glossary"><span>?</span> Plain-language glossary</a>
+      <p class="nav-label">THE LEARNING PATH</p>
+      <div id="lesson-nav"></div>
+      <p class="nav-label">YOUR WORKBENCH</p>
+      <a class="resource-link" href="#/start"><span>↳</span> Your first implementation</a>
+      <a class="resource-link" href="#/roadmap"><span>□</span> Eight-week roadmap</a>
+      <a class="resource-link" href="#/papers"><span>▤</span> Paper library</a>
+      <a class="resource-link" href="#/evaluation"><span>≋</span> Evaluation contract</a>
+    </nav>
+    <div class="course-progress"><div><span>Your progress</span><strong id="progress-label">0 / 9</strong></div><progress id="course-progress" value="0" max="9">0 of 9 lessons</progress><small>Saved on this browser.</small></div>
+    <a class="repo-link" href="https://github.com/ericsheng495/ads-retrieval-from-scratch" target="_blank" rel="noopener">Project repository <span>↗</span></a>
+  </aside>
+  <main id="main" tabindex="-1"><header class="reader-head"><h1>Better negative sampling</h1></header><article class="article"><h2 id="concept">Concept</h2>
+<p>Training against sampled candidates changes the competition each positive faces.
+In-batch candidates reflect the interaction distribution, which often favors
+popular items. Uniform corpus sampling gives different coverage. Hard negatives
+are candidates the current model mistakenly scores highly.</p>
+<p>Sampling correction, exposure bias, and hard-example selection are different
+problems. Correcting the candidate sampler does not make logged feedback representative
+of items that users never had a chance to see.</p>
+<h3 id="a-negative-is-not-always-an-observed-rejection">A negative is not always an observed rejection</h3>
+<p>A shown nonclick differs from an unshown item sampled as a training contrast.
+A false negative is a contrasted item that would actually be relevant. We
+usually cannot identify all such items without observing more outcomes.</p>
+<p>Uniform sampling gives equal draw probabilities to catalog items. In-batch
+sampling inherits item frequencies from the example stream. Hard sampling
+searches for alternatives the model currently finds competitive. These choices
+change the learning signal as well as compute cost.</p>
+<p>Think of practice questions: absurd alternatives teach little, but calling a
+second correct answer wrong teaches a contradiction. Harder candidates help
+only when the supervision and sampling assumptions remain appropriate.</p>
+<h2 id="worked-example">Worked example</h2>
+<p>Under a simplified sampler, item A has sampling probability Q(A)=0.5 and B has
+Q(B)=0.1. Equal raw training logits of 2 become approximately 2.693 and 4.303
+after subtracting <code>log Q</code>. The less frequently sampled candidate receives a
+larger correction. These are corrected <strong>training logits</strong>, not a general recipe
+for changing serving scores.</p>
+<p>If half your negative draws are uniform over N items and half come from q_batch,
+the marginal probability of a draw is <code>0.5/N + 0.5*q_batch(i)</code>. That alone does
+not settle how to correct the full loss: expected counts, repeated columns,
+positive inclusion, and the sampling process must also be accounted for.</p>
+<h2 id="application-to-this-project">Application to this project</h2>
+<p>Our v0 has duplicate and known-positive handling. Its multi-positive probability
+mass objective is not automatically the objective in Yi or Yang. Derive the
+assumptions of your extension, especially before adding a correction to every
+numerator/denominator column. Use a tiny catalog where full scores are affordable
+to check the behavior before a MovieLens sweep.</p>
+<h2 id="implement-it">Implement it</h2>
+<ol>
+<li>Count item frequencies using training data only; inspect the head/tail imbalance.</li>
+<li>Write a sampler that returns candidate IDs plus probabilities or expected counts.</li>
+<li>Derive your corrected training objective, including duplicates, on a three-item catalog.</li>
+<li>Test the uniform special case: a common correction to every logit should cancel in softmax.</li>
+<li>Add uniform corpus negatives at a fixed total candidate budget.</li>
+<li>Mine high-scoring unobserved items with a training-only checkpoint; mask known positives.</li>
+<li>Compare separate ablations for correction, mixture, hard negatives, and batch size.</li>
+</ol>
+<p>Track overall and head/tail recall, epoch time, memory, and a qualitative audit of
+plausible false negatives. Read Yi, Yang, Facebook EBR, and the optional cross-batch
+paper in <a href="papers/">the guide</a>. This phase is an exercise, not an
+implemented feature of the reference trainer.</p>
+<h2 id="self-check">Self-check</h2>
+<ul>
+<li>Why can a harder negative be a worse training example?</li>
+<li>How does sampling without replacement change your probability assumptions?</li>
+<li>Why can stale queued embeddings be problematic for cross-batch training?</li>
+</ul>
+<p>Next: <a href="lesson/6/">features and history</a>.</p></article></main>
+  <noscript>This learning site needs JavaScript for the interactive diagrams. Read the full lessons at github.com/ericsheng495/ads-retrieval-from-scratch/tree/main/tutorials.</noscript>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

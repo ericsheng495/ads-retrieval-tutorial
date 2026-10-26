@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../../">
+<meta name="initial-route" content="/lesson/4">
+<meta name="content-url" content="assets/a136279ed9f0/content.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5ef">
+  <meta name="description" content="Learn recommendation and ranking from zero, then build ML retrieval. Beginner primers, interactive diagrams, all ten Snap ad-ranking references, and PyTorch exercises.">
+  <title>Approximate nearest neighbors — Retrieval Lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23285c48'/%3E%3Ctext x='11' y='30' fill='white' font-family='Georgia' font-size='32' font-style='italic'%3Er%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/a136279ed9f0/styles.css">
+  <script src="assets/a136279ed9f0/primers.js" defer></script>
+  <script src="assets/a136279ed9f0/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to lesson</a>
+  <div class="reading-progress" aria-hidden="true"><span id="reading-fill"></span></div>
+  <header class="mobile-header"><a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span> Retrieval Lab</a><button id="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button></header>
+  <aside id="sidebar" class="sidebar" aria-label="Course navigation">
+    <a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span><span>Retrieval Lab<small>A FIELD GUIDE TO CANDIDATE GENERATION</small></span></a>
+    <label class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find a concept…" aria-label="Search lessons and papers"><kbd>/</kbd></label>
+    <div id="search-results" aria-live="polite" hidden></div>
+    <nav>
+      <a class="nav-overview" href="#/">Overview <span>↗</span></a>
+      <p class="nav-label">START HERE · NO BACKGROUND NEEDED</p>
+      <a class="resource-link" href="#/foundations"><span>01</span> Recommenders from zero</a>
+      <a class="resource-link" href="#/ranking"><span>02</span> How ranking works</a>
+      <a class="resource-link" href="#/two-stage"><span>↳</span> How the stages fit together</a>
+      <a class="resource-link" href="#/models"><span>03</span> Snap’s ten references</a>
+      <a class="resource-link" href="#/glossary"><span>?</span> Plain-language glossary</a>
+      <p class="nav-label">THE LEARNING PATH</p>
+      <div id="lesson-nav"></div>
+      <p class="nav-label">YOUR WORKBENCH</p>
+      <a class="resource-link" href="#/start"><span>↳</span> Your first implementation</a>
+      <a class="resource-link" href="#/roadmap"><span>□</span> Eight-week roadmap</a>
+      <a class="resource-link" href="#/papers"><span>▤</span> Paper library</a>
+      <a class="resource-link" href="#/evaluation"><span>≋</span> Evaluation contract</a>
+    </nav>
+    <div class="course-progress"><div><span>Your progress</span><strong id="progress-label">0 / 9</strong></div><progress id="course-progress" value="0" max="9">0 of 9 lessons</progress><small>Saved on this browser.</small></div>
+    <a class="repo-link" href="https://github.com/ericsheng495/ads-retrieval-from-scratch" target="_blank" rel="noopener">Project repository <span>↗</span></a>
+  </aside>
+  <main id="main" tabindex="-1"><header class="reader-head"><h1>Approximate nearest neighbors</h1></header><article class="article"><h2 id="concept">Concept</h2>
+<p>Exact search scores every item and returns the largest scores. Approximate nearest
+neighbor search saves work by inspecting only promising regions or compressing
+representations. That introduces a speed/accuracy/memory tradeoff.</p>
+<p>Flat search is exact. IVF groups vectors into coarse clusters and searches selected
+clusters. HNSW builds a navigable graph and explores promising neighbors. IVF's
+<code>nprobe</code> and HNSW's <code>efSearch</code> control search effort in different ways.</p>
+<h3 id="the-index-is-a-search-structure">The index is a search structure</h3>
+<p>Your encoder defines the vectors and scores; an index organizes how to find
+high-scoring vectors. Think of a library: its catalog helps locate books but
+does not determine whether the books are good. Improving ANN cannot repair
+an encoder that learned irrelevant similarities.</p>
+<p>Exact scoring work grows with item count times vector dimension. One million
+64-dimensional float32 item vectors need about 256 million bytes for coordinates
+alone, before IDs, graph links, or other overhead. Search cost and memory matter
+alongside prediction quality.</p>
+<p>IVF's clusters give a coarse map of where to look; HNSW navigates a graph.
+Their parameter values are not interchangeable units. “Approximate” means the
+search can miss exact neighbors, not that their scores become real relevance labels.</p>
+<h2 id="worked-example">Worked example</h2>
+<p>Exact top-4 IDs are <code>[3,7,2,9]</code>. ANN returns <code>[3,7,5,9]</code>. Neighbor overlap is 3/4.
+If the user's actual held-out positive is item 7, both systems have target Recall@4
+of 1 for that user. If it is item 2, exact succeeds and ANN fails. Approximation
+accuracy and recommendation quality answer different questions.</p>
+<p>An IVF search probing one cluster may skip the cluster containing item 2. Probing
+more clusters can recover it at additional query cost. Searching every cluster in
+an IVFFlat index approaches exact scoring, though tie ordering can differ.</p>
+<h2 id="application-to-this-project">Application to this project</h2>
+<p>We export both towers' normalized vectors from one selected checkpoint and build
+indexes over the item vectors. On this small catalog, overhead can dominate.
+Performance numbers from a laptop and 1,447 items do not predict million-item latency.
+The reference exports storage size, not total resident or build-time memory.</p>
+<h2 id="implement-it">Implement it</h2>
+<ol>
+<li>Load the vector export and verify its model/embedding hashes.</li>
+<li>Build <code>faiss.IndexFlatIP(d)</code>, add float32 item vectors, and search user vectors.</li>
+<li>Compare its top-K with a brute-force matrix product on a small fixture without ties.</li>
+<li>Build IVFFlat; train its coarse clusters before adding items. Sweep <code>nprobe</code>.</li>
+<li>Build HNSW and sweep <code>efSearch</code>; hold vectors and queries fixed.</li>
+<li>Warm up outside timing, measure p50/p95, and plot neighbor overlap versus latency.</li>
+</ol>
+<p>Compare with <a href="https://github.com/ericsheng495/ads-retrieval-from-scratch/blob/main/src/ann.py">src/ann.py</a> and <a href="ann-lab/">the ANN lab</a>.
+Read Johnson/FAISS and HNSW; read ScaNN when adding quantization.</p>
+<h2 id="self-check">Self-check</h2>
+<ul>
+<li>Which changes improve the learned vectors, and which only approximate their search?</li>
+<li>Why should index construction be outside query-latency timing?</li>
+<li>Why must an index carry model version and item-ID mapping metadata?</li>
+</ul>
+<p>Next: <a href="lesson/5/">negative sampling</a>.</p></article></main>
+  <noscript>This learning site needs JavaScript for the interactive diagrams. Read the full lessons at github.com/ericsheng495/ads-retrieval-from-scratch/tree/main/tutorials.</noscript>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

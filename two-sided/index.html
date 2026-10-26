@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../">
+<meta name="initial-route" content="/two-sided">
+<meta name="content-url" content="assets/a136279ed9f0/content.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5ef">
+  <meta name="description" content="Learn recommendation and ranking from zero, then build ML retrieval. Beginner primers, interactive diagrams, all ten Snap ad-ranking references, and PyTorch exercises.">
+  <title>Two-sided experiment design: when treatment changes control — Retrieval Lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23285c48'/%3E%3Ctext x='11' y='30' fill='white' font-family='Georgia' font-size='32' font-style='italic'%3Er%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/a136279ed9f0/styles.css">
+  <script src="assets/a136279ed9f0/primers.js" defer></script>
+  <script src="assets/a136279ed9f0/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to lesson</a>
+  <div class="reading-progress" aria-hidden="true"><span id="reading-fill"></span></div>
+  <header class="mobile-header"><a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span> Retrieval Lab</a><button id="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button></header>
+  <aside id="sidebar" class="sidebar" aria-label="Course navigation">
+    <a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span><span>Retrieval Lab<small>A FIELD GUIDE TO CANDIDATE GENERATION</small></span></a>
+    <label class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find a concept…" aria-label="Search lessons and papers"><kbd>/</kbd></label>
+    <div id="search-results" aria-live="polite" hidden></div>
+    <nav>
+      <a class="nav-overview" href="#/">Overview <span>↗</span></a>
+      <p class="nav-label">START HERE · NO BACKGROUND NEEDED</p>
+      <a class="resource-link" href="#/foundations"><span>01</span> Recommenders from zero</a>
+      <a class="resource-link" href="#/ranking"><span>02</span> How ranking works</a>
+      <a class="resource-link" href="#/two-stage"><span>↳</span> How the stages fit together</a>
+      <a class="resource-link" href="#/models"><span>03</span> Snap’s ten references</a>
+      <a class="resource-link" href="#/glossary"><span>?</span> Plain-language glossary</a>
+      <p class="nav-label">THE LEARNING PATH</p>
+      <div id="lesson-nav"></div>
+      <p class="nav-label">YOUR WORKBENCH</p>
+      <a class="resource-link" href="#/start"><span>↳</span> Your first implementation</a>
+      <a class="resource-link" href="#/roadmap"><span>□</span> Eight-week roadmap</a>
+      <a class="resource-link" href="#/papers"><span>▤</span> Paper library</a>
+      <a class="resource-link" href="#/evaluation"><span>≋</span> Evaluation contract</a>
+    </nav>
+    <div class="course-progress"><div><span>Your progress</span><strong id="progress-label">0 / 9</strong></div><progress id="course-progress" value="0" max="9">0 of 9 lessons</progress><small>Saved on this browser.</small></div>
+    <a class="repo-link" href="https://github.com/ericsheng495/ads-retrieval-from-scratch" target="_blank" rel="noopener">Project repository <span>↗</span></a>
+  </aside>
+  <main id="main" tabindex="-1"><header class="reader-head"><h1>Two-sided experiment design: when treatment changes control</h1></header><article class="article"><h2 id="concept">Concept</h2>
+<p>An A/B test assigns units to treatment or control and compares outcomes. The
+desired <strong>estimand</strong> is the quantity the experiment aims to measure, such as
+the difference between full rollout and no rollout. It need not equal the
+difference seen while treatment and control share a marketplace.</p>
+<p><strong>Interference</strong> means one unit's outcome depends on other units' assignments.
+Johari et al. model a two-sided market and compare customer, listing, and
+two-sided randomization. Their analysis connects bias to market balance and
+shows why no single side's naive randomization is universally reliable.
+<a href="https://arxiv.org/abs/2002.05670">Paper</a>, Management Science 2022; preprint 2020.</p>
+<h2 id="architecture">Architecture</h2>
+<div class="architecture-slot" data-diagram="two-sided"></div>
+
+<p>This diagram describes experimental relationships, not a neural-network
+architecture. A larger sample can reduce variance without removing design bias.</p>
+<h2 id="worked-example">Worked example</h2>
+<p>Imagine two buyers compete for the last available appointment. A treatment
+recommendation helps buyer A book it first. Buyer B, assigned control, now has
+one fewer option. B's outcome changed despite B's experience using the control
+algorithm. A treatment-control difference includes this competition effect.</p>
+<p>More buyers than appointments is a different environment from many unbooked
+appointments and few buyers. Which side is scarce changes how treatment
+propagates. In ads, scarce resources can include budget and impression supply;
+do not mechanically transfer every appointment-market assumption to auctions.</p>
+<h2 id="implementation-exercise">Implementation exercise</h2>
+<p>Write a tiny matching simulator with buyers, listings, capacities, and a treatment
+that changes choice probabilities. First measure all-control and all-treatment
+outcomes to define a simulated full-rollout effect. Then measure a mixed
+customer-randomized experiment and a mixed listing-randomized experiment.</p>
+<p>Repeat runs at several supply/demand ratios with fixed parameters and many
+random seeds. Plot experimental estimates against the simulated rollout effect,
+including uncertainty. Label this an educational simulator; it cannot establish
+unbiasedness for a real product or replace the paper's assumptions and proofs.</p>
+<h2 id="check-your-understanding">Check your understanding</h2>
+<p>Which resource couples units? What outcome would full rollout change? Why does
+collecting ten times as much data not automatically fix interference bias?</p>
+<p>Next: <a href="budget-split/">budget-split experiments</a>.</p></article></main>
+  <noscript>This learning site needs JavaScript for the interactive diagrams. Read the full lessons at github.com/ericsheng495/ads-retrieval-from-scratch/tree/main/tutorials.</noscript>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

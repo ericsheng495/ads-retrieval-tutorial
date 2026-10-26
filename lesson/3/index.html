@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../../">
+<meta name="initial-route" content="/lesson/3">
+<meta name="content-url" content="assets/a136279ed9f0/content.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5ef">
+  <meta name="description" content="Learn recommendation and ranking from zero, then build ML retrieval. Beginner primers, interactive diagrams, all ten Snap ad-ranking references, and PyTorch exercises.">
+  <title>Evaluation you can trust — Retrieval Lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23285c48'/%3E%3Ctext x='11' y='30' fill='white' font-family='Georgia' font-size='32' font-style='italic'%3Er%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/a136279ed9f0/styles.css">
+  <script src="assets/a136279ed9f0/primers.js" defer></script>
+  <script src="assets/a136279ed9f0/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to lesson</a>
+  <div class="reading-progress" aria-hidden="true"><span id="reading-fill"></span></div>
+  <header class="mobile-header"><a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span> Retrieval Lab</a><button id="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button></header>
+  <aside id="sidebar" class="sidebar" aria-label="Course navigation">
+    <a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span><span>Retrieval Lab<small>A FIELD GUIDE TO CANDIDATE GENERATION</small></span></a>
+    <label class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find a concept…" aria-label="Search lessons and papers"><kbd>/</kbd></label>
+    <div id="search-results" aria-live="polite" hidden></div>
+    <nav>
+      <a class="nav-overview" href="#/">Overview <span>↗</span></a>
+      <p class="nav-label">START HERE · NO BACKGROUND NEEDED</p>
+      <a class="resource-link" href="#/foundations"><span>01</span> Recommenders from zero</a>
+      <a class="resource-link" href="#/ranking"><span>02</span> How ranking works</a>
+      <a class="resource-link" href="#/two-stage"><span>↳</span> How the stages fit together</a>
+      <a class="resource-link" href="#/models"><span>03</span> Snap’s ten references</a>
+      <a class="resource-link" href="#/glossary"><span>?</span> Plain-language glossary</a>
+      <p class="nav-label">THE LEARNING PATH</p>
+      <div id="lesson-nav"></div>
+      <p class="nav-label">YOUR WORKBENCH</p>
+      <a class="resource-link" href="#/start"><span>↳</span> Your first implementation</a>
+      <a class="resource-link" href="#/roadmap"><span>□</span> Eight-week roadmap</a>
+      <a class="resource-link" href="#/papers"><span>▤</span> Paper library</a>
+      <a class="resource-link" href="#/evaluation"><span>≋</span> Evaluation contract</a>
+    </nav>
+    <div class="course-progress"><div><span>Your progress</span><strong id="progress-label">0 / 9</strong></div><progress id="course-progress" value="0" max="9">0 of 9 lessons</progress><small>Saved on this browser.</small></div>
+    <a class="repo-link" href="https://github.com/ericsheng495/ads-retrieval-from-scratch" target="_blank" rel="noopener">Project repository <span>↗</span></a>
+  </aside>
+  <main id="main" tabindex="-1"><header class="reader-head"><h1>Evaluation you can trust</h1></header><article class="article"><h2 id="concept">Concept</h2>
+<p>A split defines what information the model has and what future behavior it must
+predict. A candidate pool defines the alternatives it competes against. A metric
+only has meaning when both are stated. Strong baselines expose whether a complex
+model adds value beyond globally common items.</p>
+<p>We use per-user training, validation, and test positives. Validation selects
+settings/checkpoints. Test estimates performance after selection; repeatedly
+choosing configurations based on test makes it part of model development.</p>
+<h3 id="ask-the-evaluation-question-first">Ask the evaluation question first</h3>
+<p>“Using only what was known then, can we retrieve the next positive among the
+allowed items?” The time cutoff defines inputs, labels define relevance, and
+the candidate pool defines competition. Changing any one changes the task.</p>
+<p>If three of ten returned candidates are relevant, precision is 3/10. If those
+are all three relevant targets, recall is 3/3. Moving the best candidate from
+position ten to position one can leave Recall@10 unchanged, even though the
+display ordering improves. Position-sensitive metrics answer another question.</p>
+<h3 id="why-click-auc-is-different">Why click AUC is different</h3>
+<p>AUC evaluates how often positive examples outrank negative examples under the
+chosen evaluation distribution. Good overall discrimination can coexist with
+missing an important item from a short top-K list. It also does not establish
+calibration: correct ordering and accurate event probabilities are separate.</p>
+<p>Our one-target Recall@100 is an averaged hit indicator. It does not distinguish
+first from hundredth within that shortlist. That is intentional for a candidate
+coverage proxy, but it is not a complete measure of user experience.</p>
+<h2 id="worked-example">Worked example</h2>
+<p>A user's four distinct positives arrive as A, B, C, D. Train on A/B, validate on C,
+test on D. During validation exclude A/B. During test exclude A/B/C. The held-out
+target remains eligible. An item can appear in another user's training data.</p>
+<p>For three queries, top-2 predictions are <code>[B,C]</code>, <code>[A,D]</code>, <code>[C,B]</code> and targets are
+<code>C,B,C</code>. Two users have a hit, so one-target Recall@2 is 2/3. In this protocol it
+equals HitRate@2. With multiple relevant targets, recall needs a different denominator.</p>
+<p>If a user has five eligible items, random Recall@2 is 2/5, not 2 divided by the
+original catalog size. Average this expectation across users when pool sizes differ.</p>
+<h2 id="application-diagnose-our-measured-first-run">Application: diagnose our measured first run</h2>
+<p>The saved five-epoch MovieLens reference has test Recall@100 of about <strong>0.132</strong>,
+compared with <strong>0.072</strong> expected random and <strong>0.274</strong> popularity. Validation recall
+improved from about 0.087 at initialization to 0.144, while sampled training loss
+fell from about 0.609 in epoch 1 to 0.077 in epoch 5.</p>
+<p>That supports learning relative to random, not superiority to popularity. Possible
+next hypotheses include the short schedule, weak ID-only representation, catalog
+sampling mismatch, and the positive-mass objective. None is established by this
+one experiment. See <a href="https://github.com/ericsheng495/ads-retrieval-from-scratch/blob/main/results/reference-v0.json">the measured output</a>.</p>
+<h2 id="implement-it">Implement it</h2>
+<ol>
+<li>Hand-calculate the three-query example, then implement <code>recall_at_k</code>.</li>
+<li>Deduplicate user/item positives, split by per-user timestamp, and assert pair separation.</li>
+<li>Rank the full catalog, exclude seen items, and use deterministic tie handling.</li>
+<li>Compute popularity from training counts only; compare with expected random.</li>
+<li>Save validation metrics each epoch and evaluate the selected checkpoint on test.</li>
+<li>Add head/tail slices before changing the model. Compare with <a href="https://github.com/ericsheng495/ads-retrieval-from-scratch/blob/main/src/metrics.py">metrics.py</a>.</li>
+</ol>
+<p>Read <a href="evaluation/">the evaluation contract</a> and Schnabel. Per-user
+chronology does not prevent cross-user future leakage; a separate global cutoff
+experiment is required for a deployment-like evaluation.</p>
+<h2 id="self-check">Self-check</h2>
+<ul>
+<li>How could a random baseline accidentally become too easy?</li>
+<li>Why might popularity be a particularly strong MovieLens baseline?</li>
+<li>Which claim would require multiple seeds or a fresh future evaluation period?</li>
+</ul>
+<p>Next: <a href="lesson/4/">ANN</a>.</p></article></main>
+  <noscript>This learning site needs JavaScript for the interactive diagrams. Read the full lessons at github.com/ericsheng495/ads-retrieval-from-scratch/tree/main/tutorials.</noscript>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

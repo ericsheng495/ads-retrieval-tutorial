@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../../">
+<meta name="initial-route" content="/lesson/1">
+<meta name="content-url" content="assets/a136279ed9f0/content.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5ef">
+  <meta name="description" content="Learn recommendation and ranking from zero, then build ML retrieval. Beginner primers, interactive diagrams, all ten Snap ad-ranking references, and PyTorch exercises.">
+  <title>Embeddings &amp; two towers — Retrieval Lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23285c48'/%3E%3Ctext x='11' y='30' fill='white' font-family='Georgia' font-size='32' font-style='italic'%3Er%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/a136279ed9f0/styles.css">
+  <script src="assets/a136279ed9f0/primers.js" defer></script>
+  <script src="assets/a136279ed9f0/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to lesson</a>
+  <div class="reading-progress" aria-hidden="true"><span id="reading-fill"></span></div>
+  <header class="mobile-header"><a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span> Retrieval Lab</a><button id="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button></header>
+  <aside id="sidebar" class="sidebar" aria-label="Course navigation">
+    <a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span><span>Retrieval Lab<small>A FIELD GUIDE TO CANDIDATE GENERATION</small></span></a>
+    <label class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find a concept…" aria-label="Search lessons and papers"><kbd>/</kbd></label>
+    <div id="search-results" aria-live="polite" hidden></div>
+    <nav>
+      <a class="nav-overview" href="#/">Overview <span>↗</span></a>
+      <p class="nav-label">START HERE · NO BACKGROUND NEEDED</p>
+      <a class="resource-link" href="#/foundations"><span>01</span> Recommenders from zero</a>
+      <a class="resource-link" href="#/ranking"><span>02</span> How ranking works</a>
+      <a class="resource-link" href="#/two-stage"><span>↳</span> How the stages fit together</a>
+      <a class="resource-link" href="#/models"><span>03</span> Snap’s ten references</a>
+      <a class="resource-link" href="#/glossary"><span>?</span> Plain-language glossary</a>
+      <p class="nav-label">THE LEARNING PATH</p>
+      <div id="lesson-nav"></div>
+      <p class="nav-label">YOUR WORKBENCH</p>
+      <a class="resource-link" href="#/start"><span>↳</span> Your first implementation</a>
+      <a class="resource-link" href="#/roadmap"><span>□</span> Eight-week roadmap</a>
+      <a class="resource-link" href="#/papers"><span>▤</span> Paper library</a>
+      <a class="resource-link" href="#/evaluation"><span>≋</span> Evaluation contract</a>
+    </nav>
+    <div class="course-progress"><div><span>Your progress</span><strong id="progress-label">0 / 9</strong></div><progress id="course-progress" value="0" max="9">0 of 9 lessons</progress><small>Saved on this browser.</small></div>
+    <a class="repo-link" href="https://github.com/ericsheng495/ads-retrieval-from-scratch" target="_blank" rel="noopener">Project repository <span>↗</span></a>
+  </aside>
+  <main id="main" tabindex="-1"><header class="reader-head"><h1>Embeddings &amp; two towers</h1></header><article class="article"><h2 id="concept">Concept</h2>
+<p>An embedding is a learned vector representation. A two-tower retriever maps a
+query/user through one function and an item through another. Their score is a
+dot product. Because the item function does not depend on the current query, we
+can compute item vectors in advance and search them at request time.</p>
+<p>The representation is useful when relevant pairs have larger scores than other
+pairs. Its coordinates do not automatically have interpretable meanings such as
+"likes sports"; rotations of the entire space can preserve all dot products.</p>
+<h3 id="vectors-ids-and-lookup-tables">Vectors, IDs, and lookup tables</h3>
+<p>A vector is an ordered list of numbers; its dimension is the number of entries.
+For intuition, pretend two coordinates describe outdoor and gaming interests.
+Those invented meanings help explain arithmetic; learned coordinates need not
+have names. Training adjusts them to fit observed associations.</p>
+<p>An ID is a label, not a quantity: user 200 is not twice as interested as user
+100. An embedding lookup returns a trainable row for each known ID. Users with
+similar behavior can learn similar rows despite unrelated IDs. A feature encoder
+can instead compute a vector from metadata or history, allowing useful sharing
+when an entity has little data of its own.</p>
+<h3 id="multiply-and-sum">Multiply and sum</h3>
+<p>The dot product of <code>[a,b]</code> and <code>[c,d]</code> is <code>a*c + b*d</code>. Each matching coordinate
+contributes to a compatibility score. A large score is relative to the learned
+task; 0.8 does not mean an 80% click probability. Each tower is simply a function
+producing one side's vector. Its name does not imply a particular number of layers.</p>
+<p>Independence enables caching: compute one item vector per compatible model/item
+version, then compare it with many request vectors. A joint user/item scoring
+network, such as many heavy rankers, need not have this decomposition.</p>
+<h2 id="worked-example">Worked example</h2>
+<p>A user vector is <code>[1, 0]</code>. Three unit item vectors are <code>[1, 0]</code>, <code>[0.6, 0.8]</code>,
+and <code>[0, 1]</code>. Dot products are 1, 0.6, and 0, so the first item is retrieved first.</p>
+<p>Without normalization, item <code>[3, 4]</code> scores 3 with this user despite pointing in
+the same direction as <code>[0.6, 0.8]</code>. L2 normalization divides <code>[3, 4]</code> by its norm
+5. With both sides normalized, the dot product equals cosine similarity and
+vector length no longer affects ordering. That discards a possible signal;
+it is a modeling decision, not a mathematical requirement for retrieval.</p>
+<h2 id="application-to-this-project">Application to this project</h2>
+<p>An ID embedding table returns one trainable row per known user/item. The reference
+adds a learned linear projection to each side and normalizes outputs. The towers
+are separate functions, but this ID-only linear model remains closely related to
+matrix factorization. Side features and history modeling arrive in lesson 6.</p>
+<p>For batches of B users and B items with dimension d, encoder outputs have shape
+<code>[B, d]</code>. <code>U @ V.T</code> has shape <code>[B, B]</code>: each row scores one user against every
+item in that batch. Serving uses <code>[B, d] @ [N, d].T</code> for N catalog items.</p>
+<h2 id="implement-it">Implement it</h2>
+<ol>
+<li>Reproduce the three scores above using NumPy or PyTorch.</li>
+<li>Build <code>nn.Embedding(n_users, d)</code> and <code>nn.Embedding(n_items, d)</code>.</li>
+<li>Add separate linear layers, then <code>F.normalize(..., dim=-1)</code>.</li>
+<li>Check output shapes and norms before writing a loss.</li>
+<li>Cache all item outputs; verify cached and freshly encoded scores match.</li>
+</ol>
+<p>Compare with <a href="https://github.com/ericsheng495/ads-retrieval-from-scratch/blob/main/src/model.py">src/model.py</a>. Read DSSM for shared-space matching
+and Koren for the MF connection in <a href="papers/">the paper guide</a>.</p>
+<h2 id="self-check">Self-check</h2>
+<ul>
+<li>Why does feeding the current user into the item tower prevent one shared offline index?</li>
+<li>What signal is removed by normalization?</li>
+<li>Why can this ID-only item tower not sensibly encode a brand-new item ID?</li>
+</ul>
+<p>Next: <a href="lesson/2/">learning from negatives</a>.</p></article></main>
+  <noscript>This learning site needs JavaScript for the interactive diagrams. Read the full lessons at github.com/ericsheng495/ads-retrieval-from-scratch/tree/main/tutorials.</noscript>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

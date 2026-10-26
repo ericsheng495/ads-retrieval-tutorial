@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../">
+<meta name="initial-route" content="/roadmap">
+<meta name="content-url" content="assets/a136279ed9f0/content.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5ef">
+  <meta name="description" content="Learn recommendation and ranking from zero, then build ML retrieval. Beginner primers, interactive diagrams, all ten Snap ad-ranking references, and PyTorch exercises.">
+  <title>Eight-week study and implementation checklist — Retrieval Lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23285c48'/%3E%3Ctext x='11' y='30' fill='white' font-family='Georgia' font-size='32' font-style='italic'%3Er%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/a136279ed9f0/styles.css">
+  <script src="assets/a136279ed9f0/primers.js" defer></script>
+  <script src="assets/a136279ed9f0/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to lesson</a>
+  <div class="reading-progress" aria-hidden="true"><span id="reading-fill"></span></div>
+  <header class="mobile-header"><a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span> Retrieval Lab</a><button id="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button></header>
+  <aside id="sidebar" class="sidebar" aria-label="Course navigation">
+    <a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span><span>Retrieval Lab<small>A FIELD GUIDE TO CANDIDATE GENERATION</small></span></a>
+    <label class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find a concept…" aria-label="Search lessons and papers"><kbd>/</kbd></label>
+    <div id="search-results" aria-live="polite" hidden></div>
+    <nav>
+      <a class="nav-overview" href="#/">Overview <span>↗</span></a>
+      <p class="nav-label">START HERE · NO BACKGROUND NEEDED</p>
+      <a class="resource-link" href="#/foundations"><span>01</span> Recommenders from zero</a>
+      <a class="resource-link" href="#/ranking"><span>02</span> How ranking works</a>
+      <a class="resource-link" href="#/two-stage"><span>↳</span> How the stages fit together</a>
+      <a class="resource-link" href="#/models"><span>03</span> Snap’s ten references</a>
+      <a class="resource-link" href="#/glossary"><span>?</span> Plain-language glossary</a>
+      <p class="nav-label">THE LEARNING PATH</p>
+      <div id="lesson-nav"></div>
+      <p class="nav-label">YOUR WORKBENCH</p>
+      <a class="resource-link" href="#/start"><span>↳</span> Your first implementation</a>
+      <a class="resource-link" href="#/roadmap"><span>□</span> Eight-week roadmap</a>
+      <a class="resource-link" href="#/papers"><span>▤</span> Paper library</a>
+      <a class="resource-link" href="#/evaluation"><span>≋</span> Evaluation contract</a>
+    </nav>
+    <div class="course-progress"><div><span>Your progress</span><strong id="progress-label">0 / 9</strong></div><progress id="course-progress" value="0" max="9">0 of 9 lessons</progress><small>Saved on this browser.</small></div>
+    <a class="repo-link" href="https://github.com/ericsheng495/ads-retrieval-from-scratch" target="_blank" rel="noopener">Project repository <span>↗</span></a>
+  </aside>
+  <main id="main" tabindex="-1"><header class="reader-head"><h1>Eight-week study and implementation checklist</h1></header><article class="article"><p>Plan for roughly 6–10 hours/week; adjust scope to understanding. The original
+<a href="https://github.com/ericsheng495/ads-retrieval-from-scratch/blob/main/docs/ads-retrieval-two-tower-roadmap.pdf">PDF</a> is preserved. This checklist corrects
+its leakage wording, baseline formula, and assumptions about guaranteed gains.
+Each phase ends with a measured result and a short experiment note.
+Use <a href="papers/">the reading guide</a> for every named paper below.
+Start each topic with its <a href="./">concept-first lesson</a> before
+opening the reference implementation or beginning the checklist.</p>
+<table>
+<thead>
+<tr>
+<th>Week</th>
+<th>Phases</th>
+<th>Deliverable</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>0–1</td>
+<td>Funnel explanation and a five-epoch reference run</td>
+</tr>
+<tr>
+<td>2</td>
+<td>1–2</td>
+<td>Your own v0, baseline table, and split audit</td>
+</tr>
+<tr>
+<td>3</td>
+<td>3</td>
+<td>Flat/IVF/HNSW benchmark and tradeoff plot</td>
+</tr>
+<tr>
+<td>4</td>
+<td>4</td>
+<td>Controlled negative-sampling ablations</td>
+</tr>
+<tr>
+<td>5</td>
+<td>5</td>
+<td>Side features and history-encoder comparison</td>
+</tr>
+<tr>
+<td>6</td>
+<td>6</td>
+<td>Eligibility, cold start, and incremental freshness demo</td>
+</tr>
+<tr>
+<td>7</td>
+<td>7–8</td>
+<td>Experiment plan and a small transfer-data pipeline</td>
+</tr>
+<tr>
+<td>8</td>
+<td>8–9</td>
+<td>Transfer report, reproducible results, system design walkthrough</td>
+</tr>
+</tbody>
+</table>
+<h2 id="phase-0-understand-the-funnel">Phase 0 — Understand the funnel</h2>
+<p>Read: Snap engineering, Covington 2016.</p>
+<ul>
+<li>[ ] Draw eligibility → candidate generation → heavy models → auction from memory.</li>
+<li>[ ] Explain what each stage optimizes and why ranking cannot recover a missed candidate.</li>
+<li>[ ] Write five lines comparing retrieval/ranking objectives, model cost, latency, metrics, failure modes.</li>
+<li>[ ] Identify scale, freshness, feedback bias, and calibration constraints in the source material.</li>
+</ul>
+<p>Done when: give a 60-second explanation and distinguish documented public Snap
+behavior from assumptions in your learning project.</p>
+<h2 id="phase-1-build-and-understand-v0">Phase 1 — Build and understand v0</h2>
+<p>Read: DSSM, Covington, Koren. Reference code is provided; <a href="start/">rebuild it yourself</a>.</p>
+<ul>
+<li>[ ] Install dependencies and run five epochs on real MovieLens, with a saved log.</li>
+<li>[ ] Trace positive definition, deduplication, ID remapping, validation/test holdouts.</li>
+<li>[ ] Explain embedding dimensions, independent towers, dot product, normalization, temperature.</li>
+<li>[ ] Hand-calculate Recall@K and a three-example multi-positive loss.</li>
+<li>[ ] Explain unobserved negatives and duplicate-item/known-positive handling.</li>
+<li>[ ] Sweep temperatures 0.05/0.1/0.2 using validation; record costs and metrics.</li>
+<li>[ ] Compare against expected random and training-only popularity baselines.</li>
+</ul>
+<p>Done when: reproduce the run and explain every step, including any failure to
+improve or beat popularity. Avoid promising monotonic metrics from five epochs.</p>
+<h2 id="phase-2-honest-evaluation">Phase 2 — Honest evaluation</h2>
+<p>Read: BPR, Schnabel, Koren. See <a href="evaluation/">the evaluation contract</a>.</p>
+<ul>
+<li>[ ] Add an unnormalized dot-product MF/BPR or implicit-ALS baseline with its training objective documented.</li>
+<li>[ ] Use identical candidate pools, splits, K, and seen exclusions for every model.</li>
+<li>[ ] Assert held-out pairs are absent from that user's training; allow shared items across users.</li>
+<li>[ ] Compare per-user leave-last-out with a separate global temporal cutoff protocol.</li>
+<li>[ ] Report head/tail and light/heavy slices from training statistics, with sample sizes.</li>
+<li>[ ] Isolate items with zero training positives; describe the ID-only limitation.</li>
+<li>[ ] Append one baseline/results table and investigate the weakest slice.</li>
+</ul>
+<p>Done when: one comparable table exists, with a concrete leakage audit and
+explicit vocabulary/catalog-time assumptions. Per-user chronology alone is insufficient.</p>
+<h2 id="phase-3-ann-retrieval">Phase 3 — ANN retrieval</h2>
+<p>Read: Johnson/FAISS, HNSW, ScaNN. <a href="ann-lab/">Runnable lab</a>.</p>
+<ul>
+<li>[ ] Export normalized item vectors; match Flat top-K against brute force.</li>
+<li>[ ] Compare Flat, IVF, and HNSW on identical embeddings and queries.</li>
+<li>[ ] Sweep <code>nprobe</code>/<code>efSearch</code>, then plot neighbor overlap versus p50/p95 latency.</li>
+<li>[ ] Report held-out-target recall separately, serial QPS, storage bytes, and memory scope.</li>
+<li>[ ] Add persisted index metadata and enforce model/index version matching at serving.</li>
+<li>[ ] Measure scale effects rather than claiming MovieLens proves million-item performance.</li>
+</ul>
+<p>Done when: benchmark table/plot and a deliberately mismatched version test exist.</p>
+<h2 id="phase-4-negative-sampling-improvements">Phase 4 — Negative-sampling improvements</h2>
+<p>Read: Yi 2019, Yang 2020, Facebook EBR; cross-batch negatives as an extension.</p>
+<ul>
+<li>[ ] Derive the candidate sampling probability/expected count for your actual sampler.</li>
+<li>[ ] Implement and ablate logQ correction in training, with the inference rule explained.</li>
+<li>[ ] Mix uniform corpus and in-batch negatives; document the mixture and its correction.</li>
+<li>[ ] Mine hard negatives using a checkpoint trained only on training data.</li>
+<li>[ ] Mask known positives; audit plausible false negatives without claiming to know all of them.</li>
+<li>[ ] Compare larger batches or a versioned cross-batch queue, including compute/memory costs.</li>
+<li>[ ] Change one component at a time; rerun head/tail slices and report regressions.</li>
+</ul>
+<p>Done when: separate rows isolate each change and you can explain which bias logQ
+addresses and which exposure biases remain. An improvement is not guaranteed.</p>
+<h2 id="phase-5-features-and-user-history">Phase 5 — Features and user history</h2>
+<p>Read: Airbnb embeddings, SASRec; optional PinSage.</p>
+<ul>
+<li>[ ] Add genre features to the item tower; retain the ID-only ablation.</li>
+<li>[ ] Build a mean-pooled training-history user tower before attention.</li>
+<li>[ ] Compare learned pooling with a causal last-N sequential encoder.</li>
+<li>[ ] Ensure every history is cut off at query time; do not use future interactions.</li>
+<li>[ ] Compare head/tail/cold items and light/heavy users on identical splits.</li>
+<li>[ ] Inspect three multi-interest users and explain where a single vector loses coverage.</li>
+</ul>
+<p>Done when: an ablation table and concrete qualitative examples explain what
+features/history helped. A session/history encoder is necessary for unseen OTTO sessions.</p>
+<h2 id="phase-6-ads-style-eligibility-cold-start-freshness">Phase 6 — Ads-style eligibility, cold start, freshness</h2>
+<p>Read: DropoutNet, Facebook EBR, Covington; Snap engineering for ads context.</p>
+<ul>
+<li>[ ] Define mock category/targeting/budget eligibility using only available query-time data.</li>
+<li>[ ] Compare pre-filtering with post-filtering plus overfetch; measure eligible recall and latency.</li>
+<li>[ ] Hold out entire items from training and retrieve them from content features alone.</li>
+<li>[ ] Give unseen users an explicit popularity/content fallback and test it.</li>
+<li>[ ] Insert a new item's embedding without rebuilding the whole index; measure time-to-retrievable.</li>
+<li>[ ] Allocate a small exploration share; measure candidate displacement in simulation.</li>
+<li>[ ] Persist mappings/manifests and test stale deletions, budget updates, and model changes.</li>
+</ul>
+<p>Done when: eligible results, cold users/items, incremental inserts, and mismatch
+rejection are demonstrated. Offline simulation cannot establish exploration's causal benefit.</p>
+<h2 id="phase-7-production-and-experimentation">Phase 7 — Production and experimentation</h2>
+<p>Use the <a href="snap-overview/">Snap post companion</a> and
+<a href="models/">all ten reference lessons</a> for additional
+ranking and experimentation background. Start with the beginner ranking primer;
+the architecture track is an extension, not ten required reproductions in one week.</p>
+<p>Read: Schnabel, Yi; Snap engineering.</p>
+<ul>
+<li>[ ] Write one page on offline/online gaps: distribution shift, selection bias, stale vectors.</li>
+<li>[ ] Draft an A/B hypothesis, randomization unit, success metric, and guardrails.</li>
+<li>[ ] Choose run duration from power, traffic, delayed labels, and business cycles.</li>
+<li>[ ] Sketch impression-to-conversion joins, event IDs, observation windows, and late labels.</li>
+<li>[ ] Explain that popularity/logQ correction does not remove auction/exposure bias.</li>
+<li>[ ] Predefine ship/iterate/revert rules and monitoring/rollback triggers.</li>
+</ul>
+<p>Done when: the written plan makes a falsifiable decision possible. No production
+traffic or real experiment is required in this tutorial.</p>
+<h2 id="phase-8-transfer-to-otto-or-hm">Phase 8 — Transfer to OTTO or H&amp;M</h2>
+<p>Sources: <a href="https://github.com/otto-de/recsys-dataset">OTTO's official repository</a>,
+<a href="https://www.kaggle.com/competitions/h-and-m-personalized-fashion-recommendations">H&amp;M competition</a>.</p>
+<ul>
+<li>[ ] Choose one dataset, review terms, and create a small reproducible subset first.</li>
+<li>[ ] Map events, IDs, timestamps, and query histories into a documented data contract.</li>
+<li>[ ] Adapt the user tower to sessions/history for OTTO; ID-only unseen sessions do not transfer unchanged.</li>
+<li>[ ] Use a temporal split appropriate to the task and train-only preprocessing.</li>
+<li>[ ] Re-run popularity/MF and retrieval baselines; document any architecture changes.</li>
+<li>[ ] Report retrieval Recall@K and, separately, the competition's official metric.</li>
+<li>[ ] Write one page comparing catalog scale, sparsity, query identity, and cold-start failures.</li>
+</ul>
+<p>Done when: one transfer run reproduces from documented commands with honest
+baselines. OTTO's weighted multi-event Recall@20 and H&amp;M's MAP@12 are not the
+same metric as our one-target Recall@100. Kaggle scores are optional.</p>
+<h2 id="phase-9-onboarding-preparation">Phase 9 — Onboarding preparation</h2>
+<p>Read: revisit the papers supporting each choice rather than memorizing titles.</p>
+<ul>
+<li>[ ] Write a one-page retrieval design covering eligibility, towers, ANN, freshness, and metrics.</li>
+<li>[ ] Explain recall/latency, dimension/memory, negative sampling, and filtering tradeoffs.</li>
+<li>[ ] Reproduce results from a fresh environment and collect the final experiment table.</li>
+<li>[ ] Give a ten-minute design walkthrough and name the largest remaining uncertainty.</li>
+<li>[ ] Prepare questions: team-owned sources; bottleneck; training/negative sampling;
+  offline-to-online evaluation; index/model freshness and compatibility.</li>
+</ul>
+<p>Done when: your explanation is backed by your own measurements, and the repo
+makes it easy for someone else to reproduce them.</p></article></main>
+  <noscript>This learning site needs JavaScript for the interactive diagrams. Read the full lessons at github.com/ericsheng495/ads-retrieval-from-scratch/tree/main/tutorials.</noscript>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

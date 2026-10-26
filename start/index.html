@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../">
+<meta name="initial-route" content="/start">
+<meta name="content-url" content="assets/a136279ed9f0/content.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5ef">
+  <meta name="description" content="Learn recommendation and ranking from zero, then build ML retrieval. Beginner primers, interactive diagrams, all ten Snap ad-ranking references, and PyTorch exercises.">
+  <title>TODO #1: run, explain, and rebuild v0 — Retrieval Lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23285c48'/%3E%3Ctext x='11' y='30' fill='white' font-family='Georgia' font-size='32' font-style='italic'%3Er%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/a136279ed9f0/styles.css">
+  <script src="assets/a136279ed9f0/primers.js" defer></script>
+  <script src="assets/a136279ed9f0/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to lesson</a>
+  <div class="reading-progress" aria-hidden="true"><span id="reading-fill"></span></div>
+  <header class="mobile-header"><a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span> Retrieval Lab</a><button id="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button></header>
+  <aside id="sidebar" class="sidebar" aria-label="Course navigation">
+    <a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span><span>Retrieval Lab<small>A FIELD GUIDE TO CANDIDATE GENERATION</small></span></a>
+    <label class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find a concept…" aria-label="Search lessons and papers"><kbd>/</kbd></label>
+    <div id="search-results" aria-live="polite" hidden></div>
+    <nav>
+      <a class="nav-overview" href="#/">Overview <span>↗</span></a>
+      <p class="nav-label">START HERE · NO BACKGROUND NEEDED</p>
+      <a class="resource-link" href="#/foundations"><span>01</span> Recommenders from zero</a>
+      <a class="resource-link" href="#/ranking"><span>02</span> How ranking works</a>
+      <a class="resource-link" href="#/two-stage"><span>↳</span> How the stages fit together</a>
+      <a class="resource-link" href="#/models"><span>03</span> Snap’s ten references</a>
+      <a class="resource-link" href="#/glossary"><span>?</span> Plain-language glossary</a>
+      <p class="nav-label">THE LEARNING PATH</p>
+      <div id="lesson-nav"></div>
+      <p class="nav-label">YOUR WORKBENCH</p>
+      <a class="resource-link" href="#/start"><span>↳</span> Your first implementation</a>
+      <a class="resource-link" href="#/roadmap"><span>□</span> Eight-week roadmap</a>
+      <a class="resource-link" href="#/papers"><span>▤</span> Paper library</a>
+      <a class="resource-link" href="#/evaluation"><span>≋</span> Evaluation contract</a>
+    </nav>
+    <div class="course-progress"><div><span>Your progress</span><strong id="progress-label">0 / 9</strong></div><progress id="course-progress" value="0" max="9">0 of 9 lessons</progress><small>Saved on this browser.</small></div>
+    <a class="repo-link" href="https://github.com/ericsheng495/ads-retrieval-from-scratch" target="_blank" rel="noopener">Project repository <span>↗</span></a>
+  </aside>
+  <main id="main" tabindex="-1"><header class="reader-head"><h1>TODO #1: run, explain, and rebuild v0</h1></header><article class="article"><p>Budget: two or three focused sessions. Read the README setup first.</p>
+<p>If recommendation systems are new, first read <a href="foundations/">foundations</a>
+and <a href="ranking/">how ranking works</a>. They define the inputs, outcomes,
+and training vocabulary used below. Keep the <a href="glossary/">glossary</a>
+open while tracing your first batch.</p>
+<h2 id="1-run-the-reference">1. Run the reference</h2>
+<ul>
+<li>[ ] Run <code>python -m pytest -q</code>.</li>
+<li>[ ] Run <code>python -m src.train --epochs 5 --output artifacts/first-run</code>.</li>
+<li>[ ] Read <code>config.json</code>: confirm MovieLens, rating threshold, seed, and split hash.</li>
+<li>[ ] Read all epoch lines and <code>metrics.json</code>; compare epoch 0 and the best validation epoch.</li>
+<li>[ ] Copy validation metrics and baselines into <code>results/experiments.csv</code>.</li>
+<li>[ ] Explain any regression instead of changing the test split.</li>
+</ul>
+<p>Artifacts: <code>config.json</code>, <code>metrics.json</code>, <code>model.pt</code>, <code>embeddings.npz</code>,
+<code>manifest.json</code>. The trained checkpoint corresponds to the best validation epoch,
+not necessarily the last epoch. Baselines share the same candidate pool and split.</p>
+<h2 id="2-explain-the-math-with-a-three-example-batch">2. Explain the math with a three-example batch</h2>
+<p>For user vectors U and item vectors V, both [B, d], scores are
+<code>S = U @ V.T / temperature</code>, shape [B, B]. A row is one retrieval query.</p>
+<ul>
+<li>[ ] Draw the 3×3 matrix and identify positive columns.</li>
+<li>[ ] Explain why unobserved items may be false negatives.</li>
+<li>[ ] Use item IDs <code>[7, 7, 9]</code>; show why diagonal-only cross entropy is wrong here.</li>
+<li>[ ] Explain the reference loss: <code>logsumexp(all) - logsumexp(positives)</code> per row.</li>
+<li>[ ] Show how known <strong>training</strong> positives enter the mask; explain why validation/test labels cannot.</li>
+<li>[ ] Explain that normalized dot product is cosine; normalization removes norm information.</li>
+<li>[ ] Explain how temperature scales logits and gradients; it does not change exact serving order for fixed vectors.</li>
+</ul>
+<p>Normalization is a modeling choice, not a universal retrieval requirement.
+Without it, maximum inner product search can use vector norms as a signal.
+Our sampled contrastive objective approximates a retrieval learning task; it is
+not exact full-catalog softmax, nor a reproduction of DSSM or YouTube.</p>
+<h2 id="3-rebuild-the-pieces-yourself">3. Rebuild the pieces yourself</h2>
+<pre><code class="language-bash">git switch -c learn/v0
+</code></pre>
+<p>Create <code>scratch/</code> and implement in this order, using the reference only to check:</p>
+<ol>
+<li>Load positive rows, deduplicate user/item pairs, remap IDs, split each user by timestamp.</li>
+<li>Hand-compute top-2 and Recall@2 on four items. Then implement full-catalog evaluation.</li>
+<li>Create an embedding and projection for each tower; check output shapes and norms.</li>
+<li>Implement the multi-positive loss using <code>logsumexp</code>. Backpropagate one batch.</li>
+<li>Shuffle training pairs, optimize with Adam, evaluate validation, save the best checkpoint.</li>
+</ol>
+<p>Do not delete the reference to get started. Compare outputs on the same tiny
+fixture, then run your implementation on the fixed MovieLens split.</p>
+<h2 id="4-do-one-controlled-experiment">4. Do one controlled experiment</h2>
+<ul>
+<li>[ ] Run temperatures 0.05, 0.1, 0.2 with identical seed, dimensions, batch size, and epochs.</li>
+<li>[ ] Use a unique output directory for each run.</li>
+<li>[ ] Select by validation and explain your decision; reserve a fresh future split for unbiased final claims after repeated experimentation.</li>
+<li>[ ] Write five sentences: result, baseline, hypothesis, cost, next experiment.</li>
+</ul>
+<p>Done when: you can trace one batch from events to loss, reproduce the metric by
+hand, describe the validation/test distinction, and explain the baseline comparison.
+Expected trends are hypotheses to check, not guaranteed acceptance thresholds.</p>
+<p>Read alongside: <a href="papers/">YouTube</a>, DSSM, and the
+evaluation note. Leave logQ and hard negatives for Phase 4.</p></article></main>
+  <noscript>This learning site needs JavaScript for the interactive diagrams. Read the full lessons at github.com/ericsheng495/ads-retrieval-from-scratch/tree/main/tutorials.</noscript>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../">
+<meta name="initial-route" content="/two-stage">
+<meta name="content-url" content="assets/a136279ed9f0/content.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5ef">
+  <meta name="description" content="Learn recommendation and ranking from zero, then build ML retrieval. Beginner primers, interactive diagrams, all ten Snap ad-ranking references, and PyTorch exercises.">
+  <title>How the two stages fit together — Retrieval Lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23285c48'/%3E%3Ctext x='11' y='30' fill='white' font-family='Georgia' font-size='32' font-style='italic'%3Er%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/a136279ed9f0/styles.css">
+  <script src="assets/a136279ed9f0/primers.js" defer></script>
+  <script src="assets/a136279ed9f0/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to lesson</a>
+  <div class="reading-progress" aria-hidden="true"><span id="reading-fill"></span></div>
+  <header class="mobile-header"><a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span> Retrieval Lab</a><button id="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button></header>
+  <aside id="sidebar" class="sidebar" aria-label="Course navigation">
+    <a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span><span>Retrieval Lab<small>A FIELD GUIDE TO CANDIDATE GENERATION</small></span></a>
+    <label class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find a concept…" aria-label="Search lessons and papers"><kbd>/</kbd></label>
+    <div id="search-results" aria-live="polite" hidden></div>
+    <nav>
+      <a class="nav-overview" href="#/">Overview <span>↗</span></a>
+      <p class="nav-label">START HERE · NO BACKGROUND NEEDED</p>
+      <a class="resource-link" href="#/foundations"><span>01</span> Recommenders from zero</a>
+      <a class="resource-link" href="#/ranking"><span>02</span> How ranking works</a>
+      <a class="resource-link" href="#/two-stage"><span>↳</span> How the stages fit together</a>
+      <a class="resource-link" href="#/models"><span>03</span> Snap’s ten references</a>
+      <a class="resource-link" href="#/glossary"><span>?</span> Plain-language glossary</a>
+      <p class="nav-label">THE LEARNING PATH</p>
+      <div id="lesson-nav"></div>
+      <p class="nav-label">YOUR WORKBENCH</p>
+      <a class="resource-link" href="#/start"><span>↳</span> Your first implementation</a>
+      <a class="resource-link" href="#/roadmap"><span>□</span> Eight-week roadmap</a>
+      <a class="resource-link" href="#/papers"><span>▤</span> Paper library</a>
+      <a class="resource-link" href="#/evaluation"><span>≋</span> Evaluation contract</a>
+    </nav>
+    <div class="course-progress"><div><span>Your progress</span><strong id="progress-label">0 / 9</strong></div><progress id="course-progress" value="0" max="9">0 of 9 lessons</progress><small>Saved on this browser.</small></div>
+    <a class="repo-link" href="https://github.com/ericsheng495/ads-retrieval-from-scratch" target="_blank" rel="noopener">Project repository <span>↗</span></a>
+  </aside>
+  <main id="main" tabindex="-1"><header class="reader-head"><h1>How the two stages fit together</h1></header><article class="article"><p>Read <a href="foundations/">recommenders from zero</a> first. This lesson answers the
+questions in the discussion you shared: how models, embeddings, vector search,
+features, and training connect to one recommendation request.</p>
+<h2 id="1-two-different-computational-jobs">1. Two different computational jobs</h2>
+<p>Imagine Mira opens an app with a million possible items. In our invented design,
+retrieval returns 500 candidates. A heavier ranker scores those 500 before final
+selection. <strong>Retrieval asks “which items should we consider?” Ranking asks “given
+those items and richer information, which should come first or have most value?”</strong></p>
+<div class="architecture-slot" data-diagram="two-stage"></div>
+
+<p>This split is a computation strategy. With a small catalog, one model can score
+everything. Large systems may have additional cheap-ranking, heavy-ranking, and
+re-ranking steps. “Two-stage” is a useful abstraction, not a universal count of
+production services. A retrieval similarity and a ranker's event probability
+can also have different meanings; they need not share a score scale.</p>
+<h2 id="2-what-happens-before-a-two-tower-retrieval-request">2. What happens before a two-tower retrieval request?</h2>
+<p>A two-tower model computes <code>u = user_encoder(user, context)</code> and
+<code>v = item_encoder(item_features)</code>, with score <code>dot(u,v)</code>.</p>
+<p>Before serving, run the item encoder over the catalog and store item vectors
+with item IDs. Build an ANN index over those vectors. At request time, compute
+Mira's query vector once and search the index. You do not need to run the item
+tower again for every possible user/item pair.</p>
+<p>Exact search can calculate every catalog dot product. Approximate nearest-neighbor
+search examines promising regions or graph paths, accepting possible missed
+exact neighbors to reduce work. A vector database can host this search; a library
+such as FAISS is another component choice. Neither automatically learns the query
+representation or chooses what outcome to optimize.</p>
+<h2 id="3-do-candidates-come-from-every-possible-item">3. Do candidates come from every possible item?</h2>
+<p>Define the logical search catalog first. Inventory, locale, access, targeting,
+or other eligibility rules can limit it. Partitions, filter-aware search, or
+overfetch followed by filtering are possible implementations. Mutable rules
+may need rechecking near display time.</p>
+<p>Searching a catalog does not mean running an expensive joint neural model for
+every pair. An index was prepared earlier; the request queries that structure.
+Several retrieval sources can also contribute: popularity, similar-to-recently-viewed
+items, content matches, and personalized embeddings. Merge IDs, deduplicate,
+track sources, and check eligibility before expensive scoring.</p>
+<p>“Whole-catalog search” describes intended coverage even when ANN does not inspect
+every item. State the actual candidate universe when comparing recall: a narrower
+catalog changes the evaluation task.</p>
+<h2 id="4-why-two-towers-fit-retrieval-so-well">4. Why two towers fit retrieval so well</h2>
+<p>The key property is <strong>separability</strong>. Item encoding is independent of the current
+query, and the final score supports efficient vector search. Each tower may be
+deep and nonlinear within its own features. The outputs interact through the
+similarity operation.</p>
+<p>Saying “two towers have no interactions” is too strong: the dot product is a
+compatibility interaction and the learned encoders can represent rich patterns.
+The restriction is that an arbitrary joint user/item network cannot be inserted
+before caching one item vector for every query.</p>
+<p>For example, “how many times this user saw this exact ad in the last hour” is a
+pair-specific feature. A ranker can use it directly. Making an item's cached
+vector depend on it would require different item vectors for different users,
+breaking that simple item-side cache. More elaborate retrieval designs exist;
+our basic two-tower reference does not implement them.</p>
+<h2 id="5-what-a-dlrm-style-ranker-does-differently">5. What a DLRM-style ranker does differently</h2>
+<p>A standard DLRM-style path transforms numeric features, looks up categorical
+embeddings, computes feature interactions, and passes them through a top network.
+The final joint score is generally not a single independent query/item dot
+product. See the <a href="https://arxiv.org/abs/1906.00091">original DLRM paper</a>.</p>
+<p>Its relevant scoring computation runs for each candidate pair, possibly batched.
+That is easier to afford for 500 pairs than a million. DLRM is one option; an MLP,
+Wide &amp; Deep, DCN, or another suitable model can also fill the role. Choose with
+data, prediction quality, and serving cost, not a universal architecture rule.</p>
+<p>Internal embedding lookups or dot products do not make a model's <strong>final score</strong>
+ANN-searchable. Ask whether that final function factors into independently
+computed representations under a supported search similarity.</p>
+<h2 id="6-can-either-model-be-used-in-both-stages">6. Can either model be used in both stages?</h2>
+<p><strong>A two-tower model can rank a shortlist.</strong> Sorting its scores already produces
+an ordering. A second-stage two-tower can use larger encoders, fresher features,
+or another objective. Measure whether it improves on the first-stage score.</p>
+<p><strong>A joint ranker can score a full catalog when the budget permits.</strong> Small catalogs,
+offline jobs, or optimized special cases may allow this. At large online scale,
+a nonseparable score is not automatically an ordinary ANN retrieval function.
+Another retrieval mechanism, approximation, distillation, or architecture may
+be needed. Some factorization variants have search-friendly decompositions;
+do not assign every model in a family to one mandatory stage.</p>
+<table>
+<thead>
+<tr>
+<th>Question</th>
+<th>Two-tower dot-product score</th>
+<th>General joint DLRM-style score</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Can it rank supplied candidates?</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Can independently cached vectors represent its final score?</td>
+<td>Yes under the encoder contract</td>
+<td>Not generally</td>
+</tr>
+<tr>
+<td>Can ordinary ANN directly search its final score?</td>
+<td>Yes with compatible similarity/index</td>
+<td>Generally needs additional structure or approximation</td>
+</tr>
+<tr>
+<td>Can it score every item?</td>
+<td>Yes by exact vector scoring</td>
+<td>In principle yes; computation may be prohibitive</td>
+</tr>
+</tbody>
+</table>
+<p>Two-tower retrieval plus a joint ranker is a coherent design, not proof that
+it is the best combination for every product.</p>
+<h2 id="7-are-collaborative-and-content-filtering-separate-stages">7. Are collaborative and content filtering separate stages?</h2>
+<p>No. These terms describe information and learning approaches, not locations in
+the serving funnel. Collaborative patterns come from interactions across people
+and items. Content information comes from descriptions, metadata, or media.
+Either stage can combine both.</p>
+<p>An ID-only two-tower trained on interaction pairs is collaborative in spirit.
+Adding genre, text, image, or history features can make it hybrid. A ranker can
+likewise use IDs, learned collaborative representations, and content. Do not
+automatically label retrieval “collaborative” and ranking “content.”</p>
+<h2 id="8-does-ranking-reuse-the-retrieval-embeddings">8. Does ranking reuse the retrieval embeddings?</h2>
+<p>It can, but does not have to. Options include frozen retrieval vectors or scores
+as ranker features; separate ranker embedding tables; pretrained initialization
+with a ranker-specific fine-tuned copy; or deliberately shared parameters with
+a coordinated training/export process.</p>
+<p>The ranker may also use richer original inputs: request context, metadata,
+pair-specific exposure history, retrieval source, and other query-time signals.
+Each feature needs a consistent training/serving definition.</p>
+<p>If ranking fine-tunes weights also used by retrieval, cached item vectors can
+become incompatible with the new query encoder. Keep separate copies or update
+dependent serving artifacts together. Equal dimensions do not establish that
+two embedding spaces are compatible.</p>
+<h2 id="9-can-pretrained-video-embeddings-generate-candidates">9. Can pretrained video embeddings generate candidates?</h2>
+<p>Yes. Pretrained representations can supply a content-retrieval source or item-tower
+features. You still need a compatible query representation and an objective
+aligned with recommendation. A database of video vectors alone does not tell
+the system which vector to search for Mira.</p>
+<p>One experiment pools her previous item vectors in the same space. Another trains
+an aligned query encoder or projects pretrained features through a learned item
+tower. Do not compare arbitrary user and video models' vectors merely because
+their dimensions match.</p>
+<p>Semantic similarity is not the same as behavioral value. Two videos can share
+a topic while one is a poor choice now. Compare against popularity and interaction-trained
+retrieval using chronological evaluation and cold-item coverage, rather than
+assuming a pretrained encoder solves personalization.</p>
+<h2 id="10-trace-training-serving-and-feedback">10. Trace training, serving, and feedback</h2>
+<p>In a teaching system, train the retriever on positive interactions with a
+documented sampling mechanism. Export compatible item vectors and mappings.
+Separately train a ranker with suitable labeled examples and a defined loss.
+Observed clicks only cover displayed items; the training distribution must be
+considered relative to the candidates and exposures seen during serving.</p>
+<p>At serving time: fetch context → retrieve → merge/filter → construct ranker
+features → batch-score → select → log item IDs, exposure, versions, and eventual
+outcomes. Models can update on different schedules while their feature and
+artifact contracts remain coherent.</p>
+<p>Measure retrieval coverage and cost, ranking quality and calibration where
+appropriate, then end-to-end outcomes. Ranking cannot recover an item absent
+from its shortlist. A retrieval change also changes the ranker's input
+distribution, so isolated model results do not settle full-system performance.</p>
+<h2 id="11-build-one-connected-miniature">11. Build one connected miniature</h2>
+<p>Use the MovieLens retriever to produce 100 unseen movies per user. Attach
+metadata and an explicitly defined extra score to those candidates. Keep candidate
+IDs fixed when comparing ranking policies; separately vary retrieval's budget
+to see what downstream coverage changes.</p>
+<p>Use synthetic impression labels for a toy logistic ranker or a suitable real
+impression dataset for CTR work. MovieLens ratings are not ad impressions.
+Write down which conclusions your example can and cannot establish.</p>
+<p>Meta's <a href="https://engineering.fb.com/2023/08/09/ml-applications/scaling-instagram-explore-recommendations-system/">Instagram Explore case study</a>
+illustrates several retrieval sources, caching, and multiple ranking stages.
+It is a dated production example, not a requirement to copy its design.</p>
+<p>Now sketch the computations from a request to a displayed result. Explain why
+each model sits where it does, then continue with <a href="lesson/1/">two towers</a>
+or <a href="ranking/">the ranking primer</a>.</p></article></main>
+  <noscript>This learning site needs JavaScript for the interactive diagrams. Read the full lessons at github.com/ericsheng495/ads-retrieval-from-scratch/tree/main/tutorials.</noscript>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

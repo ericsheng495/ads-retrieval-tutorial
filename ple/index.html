@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../">
+<meta name="initial-route" content="/ple">
+<meta name="content-url" content="assets/a136279ed9f0/content.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5ef">
+  <meta name="description" content="Learn recommendation and ranking from zero, then build ML retrieval. Beginner primers, interactive diagrams, all ten Snap ad-ranking references, and PyTorch exercises.">
+  <title>PLE: separate task-specific and shared knowledge — Retrieval Lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23285c48'/%3E%3Ctext x='11' y='30' fill='white' font-family='Georgia' font-size='32' font-style='italic'%3Er%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/a136279ed9f0/styles.css">
+  <script src="assets/a136279ed9f0/primers.js" defer></script>
+  <script src="assets/a136279ed9f0/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to lesson</a>
+  <div class="reading-progress" aria-hidden="true"><span id="reading-fill"></span></div>
+  <header class="mobile-header"><a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span> Retrieval Lab</a><button id="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button></header>
+  <aside id="sidebar" class="sidebar" aria-label="Course navigation">
+    <a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span><span>Retrieval Lab<small>A FIELD GUIDE TO CANDIDATE GENERATION</small></span></a>
+    <label class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find a concept…" aria-label="Search lessons and papers"><kbd>/</kbd></label>
+    <div id="search-results" aria-live="polite" hidden></div>
+    <nav>
+      <a class="nav-overview" href="#/">Overview <span>↗</span></a>
+      <p class="nav-label">START HERE · NO BACKGROUND NEEDED</p>
+      <a class="resource-link" href="#/foundations"><span>01</span> Recommenders from zero</a>
+      <a class="resource-link" href="#/ranking"><span>02</span> How ranking works</a>
+      <a class="resource-link" href="#/two-stage"><span>↳</span> How the stages fit together</a>
+      <a class="resource-link" href="#/models"><span>03</span> Snap’s ten references</a>
+      <a class="resource-link" href="#/glossary"><span>?</span> Plain-language glossary</a>
+      <p class="nav-label">THE LEARNING PATH</p>
+      <div id="lesson-nav"></div>
+      <p class="nav-label">YOUR WORKBENCH</p>
+      <a class="resource-link" href="#/start"><span>↳</span> Your first implementation</a>
+      <a class="resource-link" href="#/roadmap"><span>□</span> Eight-week roadmap</a>
+      <a class="resource-link" href="#/papers"><span>▤</span> Paper library</a>
+      <a class="resource-link" href="#/evaluation"><span>≋</span> Evaluation contract</a>
+    </nav>
+    <div class="course-progress"><div><span>Your progress</span><strong id="progress-label">0 / 9</strong></div><progress id="course-progress" value="0" max="9">0 of 9 lessons</progress><small>Saved on this browser.</small></div>
+    <a class="repo-link" href="https://github.com/ericsheng495/ads-retrieval-from-scratch" target="_blank" rel="noopener">Project repository <span>↗</span></a>
+  </aside>
+  <main id="main" tabindex="-1"><header class="reader-head"><h1>PLE: separate task-specific and shared knowledge</h1></header><article class="article"><h2 id="concept">Concept</h2>
+<p>Flexible sharing can still mix signals that should remain task-specific. PLE
+organizes task-specific experts and shared experts into extraction layers, with
+gates controlling which representations flow upward. Stacking these layers
+progressively separates and refines the knowledge used by different tasks.</p>
+<p>A task gate combines that task's experts with shared experts. A shared gate at
+an intermediate extraction layer can combine information from all expert groups.
+This is a more structured sharing arrangement than MMoE's common expert pool;
+it addresses negative transfer and uneven task tradeoffs without guaranteeing
+that they disappear on every dataset.
+<a href="https://doi.org/10.1145/3383313.3412236">Tang et al., RecSys 2020</a>.</p>
+<h2 id="architecture">Architecture</h2>
+<div class="architecture-slot" data-diagram="ple"></div>
+
+<p>The diagram is one extraction stage; progressive layering repeats the routing
+with the prior stage's task/shared representations. A single-stage demonstration
+is a building block, not a reproduction of the full layered model.</p>
+<h2 id="worked-example">Worked example</h2>
+<p>Suppose task-A-specific output is <code>[2,0]</code>, shared output <code>[1,1]</code>, and task-B-specific
+output <code>[0,2]</code>. An A gate with weights <code>[0.75,0.25]</code> on A/shared produces
+<code>[1.75,0.25]</code>. A B gate with <code>[0.25,0.75]</code> on B/shared produces <code>[0.75,1.25]</code>.</p>
+<p>The A gate does not directly mix B's task-specific expert output in this stage.
+Shared paths can still carry information between tasks. “Task-specific” does
+not mean the entire network is isolated or that its gradient can never be
+indirectly affected through shared components.</p>
+<h2 id="implementation-exercise">Implementation exercise</h2>
+<p>First implement one extraction layer with an explicit list of legal expert
+inputs for each gate. Verify the toy outputs and test that the A gate's list
+does not include B-specific experts. Then stack two extraction layers with
+compatible widths and add task heads.</p>
+<p>Compare with shared-bottom and MMoE using the same task definitions and masks.
+Log task-specific loss curves and parameter counts. Handle task imbalance and
+missing labels before interpreting a joint-model improvement. Do not claim
+MovieLens has real ad click and conversion targets.</p>
+<h2 id="check-your-understanding">Check your understanding</h2>
+<p>What changes between one extraction stage and a progressive stack? Which expert
+groups can each gate use? Why can “task A improved, task B worsened” matter
+even if an aggregate score increased?</p>
+<p>Next: <a href="dcn-v2/">DCN V2</a>.</p></article></main>
+  <noscript>This learning site needs JavaScript for the interactive diagrams. Read the full lessons at github.com/ericsheng495/ads-retrieval-from-scratch/tree/main/tutorials.</noscript>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

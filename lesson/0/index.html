@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../../">
+<meta name="initial-route" content="/lesson/0">
+<meta name="content-url" content="assets/a136279ed9f0/content.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5ef">
+  <meta name="description" content="Learn recommendation and ranking from zero, then build ML retrieval. Beginner primers, interactive diagrams, all ten Snap ad-ranking references, and PyTorch exercises.">
+  <title>The retrieval funnel — Retrieval Lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23285c48'/%3E%3Ctext x='11' y='30' fill='white' font-family='Georgia' font-size='32' font-style='italic'%3Er%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/a136279ed9f0/styles.css">
+  <script src="assets/a136279ed9f0/primers.js" defer></script>
+  <script src="assets/a136279ed9f0/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to lesson</a>
+  <div class="reading-progress" aria-hidden="true"><span id="reading-fill"></span></div>
+  <header class="mobile-header"><a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span> Retrieval Lab</a><button id="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button></header>
+  <aside id="sidebar" class="sidebar" aria-label="Course navigation">
+    <a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span><span>Retrieval Lab<small>A FIELD GUIDE TO CANDIDATE GENERATION</small></span></a>
+    <label class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find a concept…" aria-label="Search lessons and papers"><kbd>/</kbd></label>
+    <div id="search-results" aria-live="polite" hidden></div>
+    <nav>
+      <a class="nav-overview" href="#/">Overview <span>↗</span></a>
+      <p class="nav-label">START HERE · NO BACKGROUND NEEDED</p>
+      <a class="resource-link" href="#/foundations"><span>01</span> Recommenders from zero</a>
+      <a class="resource-link" href="#/ranking"><span>02</span> How ranking works</a>
+      <a class="resource-link" href="#/two-stage"><span>↳</span> How the stages fit together</a>
+      <a class="resource-link" href="#/models"><span>03</span> Snap’s ten references</a>
+      <a class="resource-link" href="#/glossary"><span>?</span> Plain-language glossary</a>
+      <p class="nav-label">THE LEARNING PATH</p>
+      <div id="lesson-nav"></div>
+      <p class="nav-label">YOUR WORKBENCH</p>
+      <a class="resource-link" href="#/start"><span>↳</span> Your first implementation</a>
+      <a class="resource-link" href="#/roadmap"><span>□</span> Eight-week roadmap</a>
+      <a class="resource-link" href="#/papers"><span>▤</span> Paper library</a>
+      <a class="resource-link" href="#/evaluation"><span>≋</span> Evaluation contract</a>
+    </nav>
+    <div class="course-progress"><div><span>Your progress</span><strong id="progress-label">0 / 9</strong></div><progress id="course-progress" value="0" max="9">0 of 9 lessons</progress><small>Saved on this browser.</small></div>
+    <a class="repo-link" href="https://github.com/ericsheng495/ads-retrieval-from-scratch" target="_blank" rel="noopener">Project repository <span>↗</span></a>
+  </aside>
+  <main id="main" tabindex="-1"><header class="reader-head"><h1>The retrieval funnel</h1></header><article class="article"><h2 id="concept">Concept</h2>
+<p>A recommendation system cannot afford to run its most expensive model on every
+item. Retrieval uses a cheap score to find a manageable candidate set; ranking
+uses more features and computation to choose among those candidates. Eligibility
+determines which items can be shown at all. An auction can then combine predictions
+with bids and business rules.</p>
+<p>Think of retrieval as deciding which applications reach an interview. A perfect
+interviewer cannot hire someone whose application was discarded earlier.</p>
+<h3 id="start-with-one-request">Start with one request</h3>
+<p>When Mira opens a feed, the system must fill a display opportunity. Its available
+inputs describe a user, a situation, and a catalog. “Useful” depends on the goal:
+a click, an enjoyable watch, and a purchase are different outcomes. Read
+<a href="foundations/">the foundations</a> if these terms are new.</p>
+<p>Eligibility asks “may this item be shown?” Retrieval asks “which items merit
+more computation?” Ranking uses richer information to order or value that
+shortlist. Returning 500 candidates does not mean displaying 500 ads. Several
+retrieval sources can contribute items, and their raw scores can have different
+meanings. The ranker supplies a common comparison for the merged shortlist.</p>
+<h3 id="recall-and-precision-are-different">Recall and precision are different</h3>
+<p>Precision is the fraction of returned candidates that are relevant. Recall is
+the fraction of relevant items that were returned. A shortlist can tolerate
+some irrelevant candidates because ranking gets another chance to remove them.
+Dropping a valuable candidate is harder to repair.</p>
+<p>Returning the whole catalog can give perfect coverage under a fixed label set
+while defeating the purpose of retrieval. The task is useful coverage within
+a candidate and latency budget, not maximizing one number without constraints.</p>
+<h2 id="worked-example">Worked example</h2>
+<p>Suppose there are 1,000,000 eligible ads. A ranker takes 0.2 milliseconds per ad
+under an illustrative serial assumption. Scoring the entire catalog takes
+200 seconds; scoring 500 candidates takes 100 milliseconds. Real systems batch
+and parallelize work, but the computation still has to fit a serving budget.</p>
+<p>If there are 20 relevant ads and retrieval returns 15 of them in its 500 candidates,
+Recall@500 is 15/20 = 0.75. Ranking can reorder those 15; it cannot recover the
+five missing ads. The meaning of "relevant" must come from a defined label or
+evaluation proxy, not just whichever score the retriever produces.</p>
+<h2 id="application-to-this-project">Application to this project</h2>
+<p>MovieLens provides user/movie feedback, so movies are stand-ins for ads. We learn
+a cheap embedding score and evaluate whether a user's held-out positive survives
+candidate generation. We do not have bids, impressions, or real auction labels.</p>
+<p><a href="https://eng.snap.com/machine-learning-snap-ad-ranking">Snap's public post</a>
+describes the funnel. <a href="papers/">Covington 2016</a> shows a separate
+candidate-generation and ranking design at YouTube. Our implementation is an
+educational design choice based on public retrieval research.</p>
+<h2 id="implement-it">Implement it</h2>
+<p>Before training anything, make a list of 100 toy item IDs and a separate set of
+five relevant IDs. Write a candidate generator that returns ten items and a
+ranker that reorders those ten. Measure relevant-item coverage before and after
+ranking. Keep the same candidates while changing the ranking function.</p>
+<p>Then draw the full funnel and label which component your code represents.</p>
+<h2 id="self-check">Self-check</h2>
+<ul>
+<li>Can a ranker repair candidate coverage while keeping the candidate set fixed?</li>
+<li>Why is a retrieval latency reduction useful even if ranking quality is unchanged?</li>
+<li>What information would you need to define relevance for ads rather than movies?</li>
+</ul>
+<p>Next: <a href="lesson/1/">embeddings and two towers</a>.</p></article></main>
+  <noscript>This learning site needs JavaScript for the interactive diagrams. Read the full lessons at github.com/ericsheng495/ads-retrieval-from-scratch/tree/main/tutorials.</noscript>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

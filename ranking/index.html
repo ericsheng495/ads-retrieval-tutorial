@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../">
+<meta name="initial-route" content="/ranking">
+<meta name="content-url" content="assets/a136279ed9f0/content.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5ef">
+  <meta name="description" content="Learn recommendation and ranking from zero, then build ML retrieval. Beginner primers, interactive diagrams, all ten Snap ad-ranking references, and PyTorch exercises.">
+  <title>How ranking works: from features to a displayed item — Retrieval Lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23285c48'/%3E%3Ctext x='11' y='30' fill='white' font-family='Georgia' font-size='32' font-style='italic'%3Er%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/a136279ed9f0/styles.css">
+  <script src="assets/a136279ed9f0/primers.js" defer></script>
+  <script src="assets/a136279ed9f0/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to lesson</a>
+  <div class="reading-progress" aria-hidden="true"><span id="reading-fill"></span></div>
+  <header class="mobile-header"><a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span> Retrieval Lab</a><button id="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button></header>
+  <aside id="sidebar" class="sidebar" aria-label="Course navigation">
+    <a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span><span>Retrieval Lab<small>A FIELD GUIDE TO CANDIDATE GENERATION</small></span></a>
+    <label class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find a concept…" aria-label="Search lessons and papers"><kbd>/</kbd></label>
+    <div id="search-results" aria-live="polite" hidden></div>
+    <nav>
+      <a class="nav-overview" href="#/">Overview <span>↗</span></a>
+      <p class="nav-label">START HERE · NO BACKGROUND NEEDED</p>
+      <a class="resource-link" href="#/foundations"><span>01</span> Recommenders from zero</a>
+      <a class="resource-link" href="#/ranking"><span>02</span> How ranking works</a>
+      <a class="resource-link" href="#/two-stage"><span>↳</span> How the stages fit together</a>
+      <a class="resource-link" href="#/models"><span>03</span> Snap’s ten references</a>
+      <a class="resource-link" href="#/glossary"><span>?</span> Plain-language glossary</a>
+      <p class="nav-label">THE LEARNING PATH</p>
+      <div id="lesson-nav"></div>
+      <p class="nav-label">YOUR WORKBENCH</p>
+      <a class="resource-link" href="#/start"><span>↳</span> Your first implementation</a>
+      <a class="resource-link" href="#/roadmap"><span>□</span> Eight-week roadmap</a>
+      <a class="resource-link" href="#/papers"><span>▤</span> Paper library</a>
+      <a class="resource-link" href="#/evaluation"><span>≋</span> Evaluation contract</a>
+    </nav>
+    <div class="course-progress"><div><span>Your progress</span><strong id="progress-label">0 / 9</strong></div><progress id="course-progress" value="0" max="9">0 of 9 lessons</progress><small>Saved on this browser.</small></div>
+    <a class="repo-link" href="https://github.com/ericsheng495/ads-retrieval-from-scratch" target="_blank" rel="noopener">Project repository <span>↗</span></a>
+  </aside>
+  <main id="main" tabindex="-1"><header class="reader-head"><h1>How ranking works: from features to a displayed item</h1></header><article class="article"><p>Read <a href="foundations/">the recommender foundations</a> first. Here we build a mental
+model of a click ranker using one small equation, then connect it to larger
+models. You do not need to know neural networks to follow the first example.</p>
+<h2 id="1-a-ranker-scores-a-user-an-item-and-a-situation">1. A ranker scores a user, an item, and a situation</h2>
+<p>A ranker receives a candidate plus its request context. It can estimate the
+probability of a click, predict watch time, or learn another usefulness score.
+The product chooses how to use that prediction to order or select candidates.</p>
+<p>If you score three candidates as 0.06, 0.04, and 0.12 for click probability,
+sorting from largest to smallest gives game → boots → coffee in our example.
+The sorting operation is simple. Learning useful and trustworthy scores is the
+hard part. A probability score is specific to an event definition and population.</p>
+<p>A retrieval dot product is usually a relative similarity score. Its value 0.8
+does not mean an 80% chance of a click. Separating similarity from calibrated
+probability avoids a common confusion when moving from retrieval to ranking.</p>
+<h2 id="2-make-features-numerical">2. Make features numerical</h2>
+<p>Suppose we describe one candidate with two toy features:</p>
+<ul>
+<li><code>match</code>: how strongly the available request history matches its topic, from 0 to 1.</li>
+<li><code>fatigue</code>: how often similar content has recently been shown, scaled from 0 to 1.</li>
+</ul>
+<p>Real features require explicit definitions and query-time data. We invent these
+two numbers to expose the arithmetic. They are not measurements from Snap.
+Categorical inputs such as ad category can be represented using indicator columns
+or learned embedding lookups; a raw numeric ID should not imply an ordering.</p>
+<h2 id="3-start-with-logistic-regression">3. Start with logistic regression</h2>
+<p>A linear model multiplies each feature by a coefficient and adds a bias:</p>
+<pre><code class="language-text">z = bias + weight_match × match + weight_fatigue × fatigue
+z = -2   + 3            × 0.7   - 2              × 0.2
+z = -0.3
+</code></pre>
+<p>The coefficients say how inputs influence the raw score. The bias represents a
+baseline tendency when the other inputs are zero. The raw score <code>z</code> is called a
+<strong>logit</strong>; it can be any real number.</p>
+<p>The <strong>sigmoid</strong> maps it to a number between zero and one:</p>
+<pre><code class="language-text">p = sigmoid(z) = 1 / (1 + exp(-z))
+p = sigmoid(-0.3) ≈ 0.426
+</code></pre>
+<p>Here <code>exp</code> is the exponential function. You can evaluate it with <code>math.exp</code>;
+you do not need to derive it before running the example. Larger logits produce
+larger probabilities, and z=0 produces p=0.5. See
+<a href="https://developers.google.com/machine-learning/crash-course/logistic-regression/sigmoid-function">Google's logistic regression explanation</a>.</p>
+<p>This is <strong>logistic regression</strong> despite its name: a common binary classification
+model. Its output format can represent a probability, but the sigmoid alone
+does not guarantee empirically accurate probabilities. The data and training matter.</p>
+<div data-explorer="predictor"></div>
+
+<h2 id="4-learn-from-an-outcome-instead-of-writing-the-weights">4. Learn from an outcome instead of writing the weights</h2>
+<p>Imagine that candidate was shown and clicked: label <code>y=1</code>. We want the model to
+assign the observed event a larger probability, on average across good training
+data. <strong>Binary cross-entropy</strong>, also called log loss, is:</p>
+<pre><code class="language-text">loss = -[ y × log(p) + (1-y) × log(1-p) ]
+if clicked:     loss = -log(p)
+if not clicked: loss = -log(1-p)
+</code></pre>
+<p>At p≈0.426, a click gives loss about 0.854; a nonclick gives about 0.554.
+Confidently predicting near zero for an observed click incurs a large loss.
+The loss is averaged over examples so the model has to explain many outcomes,
+not just one convenient case.</p>
+<p>For logistic regression with this loss, the derivative with respect to the
+logit is <code>p-y</code>. A derivative describes how a small score change affects the
+loss. At p≈0.426 with y=1, it is about -0.574. A simple gradient update subtracts
+learning-rate × derivative from the bias. With learning rate 0.5:</p>
+<pre><code class="language-text">new_bias = -2 - 0.5 × (0.426 - 1) ≈ -1.713
+</code></pre>
+<p>With the same features, that increases the predicted click probability.
+For y=0 the update pushes it downward. A real optimizer updates all parameters
+using many batches; this one-bias step is an instructional example.</p>
+<h2 id="5-where-training-rows-come-from">5. Where training rows come from</h2>
+<p>For an impression click model, a row describes what was shown and available
+before prediction; its label records whether a click occurred within the label
+definition. Unshown items have unknown outcomes. Training only on clicked rows
+would not teach an ordinary binary model what separates clicks from nonclicks.</p>
+<p>There can be far more nonclicks than clicks. <strong>Class imbalance</strong> means the label
+frequencies differ substantially. Always predicting a nonclick can give high
+accuracy while offering useless ordering. Sampling nonclicks changes the
+training distribution; it can require corrections before scores are treated
+as probabilities under the serving distribution.</p>
+<h2 id="6-good-ordering-and-good-probabilities-differ">6. Good ordering and good probabilities differ</h2>
+<p>Suppose two models predict click probabilities for the same three ads:</p>
+<pre><code class="language-text">model A: 0.03, 0.02, 0.01
+model B: 0.30, 0.20, 0.10
+</code></pre>
+<p>Both produce the same ordering. Their implied number of clicks is very different.
+<strong>Calibration</strong> asks whether observed event frequencies match predictions among
+comparable groups. If items assigned roughly 0.1 probability click about 10% of
+the time under a well-defined exposure, that group is calibrated.</p>
+<p>Discrimination metrics such as AUC focus on ordering positive examples above
+negative examples. Log loss evaluates probability assignments. Neither replaces
+examining calibration, slices, or online outcomes. A ranker used inside a value
+calculation can need both good ordering and accurate probabilities.</p>
+<h2 id="7-pointwise-pairwise-and-listwise-training">7. Pointwise, pairwise, and listwise training</h2>
+<p><strong>Pointwise</strong> training predicts a target for each example, as in the click model
+above. <strong>Pairwise</strong> training compares two items for a query and encourages the
+preferred item to score higher. <strong>Listwise</strong> training considers a candidate list
+or its distribution jointly. These are families of objectives, not three model
+architectures.</p>
+<p>You can train a neural network pointwise and still use it to rank by its output.
+The ranking task does not require that the loss literally sort items during
+training. Choosing an objective depends on labels, sampling, and the decision
+the product needs.</p>
+<h2 id="8-why-larger-ranking-models-exist">8. Why larger ranking models exist</h2>
+<p>A single linear coefficient cannot express every situation. “Hiking category”
+may be useful when paired with “recent hiking interest,” but less useful in
+other contexts. That dependency is a <strong>feature interaction</strong>.</p>
+<p>Wide &amp; Deep, DCN, DeepFM, and xDeepFM offer different ways to learn interactions.
+MMoE and PLE address a different axis: how several tasks, such as clicks and
+conversions, can share information without harming one another. They are not
+all successive replacements for the same problem.</p>
+<p>These heavy models can consume the user and candidate together. Their output
+does not generally factor into one cached item vector and one query vector.
+That flexibility helps after retrieval has made the candidate count manageable.
+See <a href="models/">the Snap reference learning path</a> for all ten papers.</p>
+<h2 id="9-ranking-is-followed-by-a-product-decision">9. Ranking is followed by a product decision</h2>
+<div data-explorer="rank-order"></div>
+
+<p>Sorting by click probability optimizes a click proxy. A value objective might
+multiply a suitable per-impression conversion probability by a defined value.
+An auction then also has bids, budgets, pricing, and product constraints. A feed
+may re-rank for diversity or fatigue. The learned score is an input to selection,
+not a complete description of the selection system.</p>
+<p>Use the objective-switching example on this page: the candidates stay fixed
+while the winner changes. Then explain why retrieval must preserve candidates
+useful to the downstream objective, rather than only items its own cheap model likes.</p>
+<h2 id="10-your-first-ranking-exercise">10. Your first ranking exercise</h2>
+<p>Implement the toy logistic predictor in ten lines using <code>math.exp</code>. Check z=0
+gives p=0.5. Compute click and nonclick losses, then update the bias once with
+<code>bias -= 0.5 * (p-y)</code>. Verify a positive example raises p and a negative lowers p.</p>
+<p>Next, sort the three ads from the foundations page by click probability,
+conversion probability, and expected toy value. Say which labels and features
+you would need to learn each prediction instead of inventing the probabilities.</p>
+<p>Once that makes sense, return to <a href="lesson/0/">retrieval lesson 0</a>.
+The retrieval implementation is your first end-to-end project; ranking is
+the context that explains what its candidates are for.</p></article></main>
+  <noscript>This learning site needs JavaScript for the interactive diagrams. Read the full lessons at github.com/ericsheng495/ads-retrieval-from-scratch/tree/main/tutorials.</noscript>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

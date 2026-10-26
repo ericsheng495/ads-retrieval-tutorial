@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <base href="../../">
+<meta name="initial-route" content="/lesson/2">
+<meta name="content-url" content="assets/a136279ed9f0/content.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5ef">
+  <meta name="description" content="Learn recommendation and ranking from zero, then build ML retrieval. Beginner primers, interactive diagrams, all ten Snap ad-ranking references, and PyTorch exercises.">
+  <title>Learning from negatives — Retrieval Lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23285c48'/%3E%3Ctext x='11' y='30' fill='white' font-family='Georgia' font-size='32' font-style='italic'%3Er%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/a136279ed9f0/styles.css">
+  <script src="assets/a136279ed9f0/primers.js" defer></script>
+  <script src="assets/a136279ed9f0/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to lesson</a>
+  <div class="reading-progress" aria-hidden="true"><span id="reading-fill"></span></div>
+  <header class="mobile-header"><a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span> Retrieval Lab</a><button id="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button></header>
+  <aside id="sidebar" class="sidebar" aria-label="Course navigation">
+    <a href="#/" class="brand"><span class="brand-symbol">r<span>↗</span></span><span>Retrieval Lab<small>A FIELD GUIDE TO CANDIDATE GENERATION</small></span></a>
+    <label class="search-wrap"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find a concept…" aria-label="Search lessons and papers"><kbd>/</kbd></label>
+    <div id="search-results" aria-live="polite" hidden></div>
+    <nav>
+      <a class="nav-overview" href="#/">Overview <span>↗</span></a>
+      <p class="nav-label">START HERE · NO BACKGROUND NEEDED</p>
+      <a class="resource-link" href="#/foundations"><span>01</span> Recommenders from zero</a>
+      <a class="resource-link" href="#/ranking"><span>02</span> How ranking works</a>
+      <a class="resource-link" href="#/two-stage"><span>↳</span> How the stages fit together</a>
+      <a class="resource-link" href="#/models"><span>03</span> Snap’s ten references</a>
+      <a class="resource-link" href="#/glossary"><span>?</span> Plain-language glossary</a>
+      <p class="nav-label">THE LEARNING PATH</p>
+      <div id="lesson-nav"></div>
+      <p class="nav-label">YOUR WORKBENCH</p>
+      <a class="resource-link" href="#/start"><span>↳</span> Your first implementation</a>
+      <a class="resource-link" href="#/roadmap"><span>□</span> Eight-week roadmap</a>
+      <a class="resource-link" href="#/papers"><span>▤</span> Paper library</a>
+      <a class="resource-link" href="#/evaluation"><span>≋</span> Evaluation contract</a>
+    </nav>
+    <div class="course-progress"><div><span>Your progress</span><strong id="progress-label">0 / 9</strong></div><progress id="course-progress" value="0" max="9">0 of 9 lessons</progress><small>Saved on this browser.</small></div>
+    <a class="repo-link" href="https://github.com/ericsheng495/ads-retrieval-from-scratch" target="_blank" rel="noopener">Project repository <span>↗</span></a>
+  </aside>
+  <main id="main" tabindex="-1"><header class="reader-head"><h1>Learning from negatives</h1></header><article class="article"><h2 id="concept">Concept</h2>
+<p>Training examples give positive user/item pairs. To make their scores meaningful,
+compare them with candidate alternatives. In-batch sampling uses the other items
+already in a batch, avoiding a fresh full-catalog score matrix at each step.
+These alternatives are unobserved items, not proven dislikes.</p>
+<p>Softmax turns a row of logits into probabilities over its sampled candidates.
+With one positive, negative log probability rewards a large positive score relative
+to the rest. This is a sampled contrastive objective, not the exact full-catalog loss.</p>
+<h3 id="what-training-changes">What training changes</h3>
+<p>Initially the embedding coordinates are arbitrary. A loss supplies a numerical
+learning signal, and an optimizer adjusts the parameters to reduce it. A batch
+is a group of examples processed together; an epoch is a pass through training
+examples. These are training units, not serving stages.</p>
+<p>If you only reward increasing positive scores, the model can raise many scores
+without useful separation. Comparing positives against alternatives asks it to
+learn a relative ordering. Three user/item pairs can generate a 3×3 score
+matrix: each user scores all three batch items, not just its paired item.</p>
+<h3 id="a-candidate-distribution-is-not-a-click-probability">A candidate distribution is not a click probability</h3>
+<p>Softmax exponentiates scores and divides by their sum, so values sum to one
+over the supplied candidates. Add candidates and those probabilities can change.
+They are not automatically probabilities that the user clicks each item when
+shown. The <a href="ranking/">ranking primer</a> uses a different label and sigmoid model.</p>
+<p>The positive usually begins on the matrix diagonal. Duplicate item columns and
+other known positives explain why “every off-diagonal entry is negative” can be
+wrong. The optimizer can learn contradictions if the supervision ignores that.</p>
+<h2 id="worked-example">Worked example</h2>
+<p>Let one user's scores be <code>[2, 1]</code>, with the first item positive. Its probability
+is <code>exp(2)/(exp(2)+exp(1)) ≈ 0.731</code>, and its loss is <code>-log(0.731) ≈ 0.313</code>.
+Divide scores by temperature 0.5: logits become <code>[4, 2]</code>, positive probability
+becomes about 0.881, and loss about 0.127. A smaller temperature sharpens the
+distribution, but confidently wrong scores can produce larger losses and gradients.</p>
+<p>Now let both columns represent the same positive item. Penalizing the second
+column as a negative contradicts the label. Our positive mask includes both:</p>
+<pre><code class="language-text">loss(row) = logsumexp(all candidate logits)
+            - logsumexp(positive candidate logits)
+</code></pre>
+<p>If all columns are positive, both terms match and loss is zero. Known training
+positives for the same user also enter the numerator. Held-out labels never do.</p>
+<h2 id="application-to-this-project">Application to this project</h2>
+<p>Popular movies appear repeatedly in batches, and users can have multiple observed
+positives. The mask avoids obvious contradictions, but cannot identify every movie
+a user would enjoy. Candidate sampling also favors popular items; lesson 5 explores it.</p>
+<h2 id="implement-it">Implement it</h2>
+<ol>
+<li>Calculate the two numeric losses above by hand and with tensors.</li>
+<li>Create a <code>[B, B]</code> matrix from the encoders and divide by temperature.</li>
+<li>Construct an item-equality positive mask; OR it with known training-positive membership.</li>
+<li>Use <code>logsumexp</code> for numerical stability; mask nonpositive numerator columns with negative infinity.</li>
+<li>Average row losses, call <code>backward()</code>, and inspect finite gradients.</li>
+<li>Run the duplicate-positive test, then compare against <code>in_batch_loss</code> in <a href="https://github.com/ericsheng495/ads-retrieval-from-scratch/blob/main/src/model.py">model.py</a>.</li>
+</ol>
+<p>Read Yi and Yang after implementing the basic loss; their correction mechanisms
+depend on the actual sampler and should not be pasted blindly onto this variant.</p>
+<h2 id="self-check">Self-check</h2>
+<ul>
+<li>Why can batch size affect training even with unchanged embedding dimensions?</li>
+<li>Why is a declining sampled loss not proof of improving catalog recall?</li>
+<li>Does changing temperature alone reorder fixed vectors during exact serving?</li>
+</ul>
+<p>Next: <a href="lesson/3/">evaluation</a>.</p></article></main>
+  <noscript>This learning site needs JavaScript for the interactive diagrams. Read the full lessons at github.com/ericsheng495/ads-retrieval-from-scratch/tree/main/tutorials.</noscript>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
