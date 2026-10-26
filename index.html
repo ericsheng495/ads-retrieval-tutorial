@@ -4,10 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f7f5ef">
-  <meta name="description" content="Learn ML retrieval from first principles. Nine concept-first lessons with interactive diagrams, PyTorch exercises, and a guided paper library.">
+  <meta name="description" content="Learn recommendation and ranking from zero, then build ML retrieval. Beginner primers, interactive diagrams, all ten Snap ad-ranking references, and PyTorch exercises.">
   <title>Retrieval Lab — Learn it. See it. Build it.</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23285c48'/%3E%3Ctext x='11' y='30' fill='white' font-family='Georgia' font-size='32' font-style='italic'%3Er%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles.css">
+  <script src="primers.js" defer></script>
   <script src="app.js" defer></script>
 </head>
 <body>
@@ -20,6 +21,11 @@
     <div id="search-results" aria-live="polite" hidden></div>
     <nav>
       <a class="nav-overview" href="#/">Overview <span>↗</span></a>
+      <p class="nav-label">START HERE · NO BACKGROUND NEEDED</p>
+      <a class="resource-link" href="#/foundations"><span>01</span> Recommenders from zero</a>
+      <a class="resource-link" href="#/ranking"><span>02</span> How ranking works</a>
+      <a class="resource-link" href="#/models"><span>03</span> Snap’s ten references</a>
+      <a class="resource-link" href="#/glossary"><span>?</span> Plain-language glossary</a>
       <p class="nav-label">THE LEARNING PATH</p>
       <div id="lesson-nav"></div>
       <p class="nav-label">YOUR WORKBENCH</p>

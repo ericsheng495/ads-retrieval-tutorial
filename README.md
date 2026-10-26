@@ -2,6 +2,8 @@
 
 An interactive guide to ML candidate retrieval: nine concept-first lessons,
 live SVG diagrams, worked examples, implementation exercises, and research papers.
+Beginner primers cover recommendation and ranking from zero; an additional track
+explains all ten references from Snap's public ad-ranking post.
 
 **Read the site: https://ericsheng495.github.io/ads-retrieval-tutorial/**
 
